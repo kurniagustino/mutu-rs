@@ -21,6 +21,8 @@ class ImutCategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'Imut Categori Area';
+
     protected static ?string $recordTitleAttribute = 'imut';
 
     protected static string|UnitEnum|null $navigationGroup = 'Master Data';
