@@ -9,11 +9,11 @@ use App\Filament\Resources\ImutCategories\Schemas\ImutCategoryForm;
 use App\Filament\Resources\ImutCategories\Tables\ImutCategoriesTable;
 use App\Models\ImutCategory;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class ImutCategoryResource extends Resource
 {
@@ -23,7 +23,10 @@ class ImutCategoryResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'imut';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Master Data';
+    protected static string|UnitEnum|null $navigationGroup = 'Master Data';
+
+    // ✅ Disable polling untuk performa lebih baik
+    protected static ?string $pollingInterval = null;
 
     public static function form(Schema $schema): Schema
     {
@@ -49,5 +52,12 @@ class ImutCategoryResource extends Resource
             'create' => CreateImutCategory::route('/create'),
             'edit' => EditImutCategory::route('/{record}/edit'),
         ];
+    }
+
+    // ✅ Optimize Eloquent Query
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes(); // ✅ Remove global scopes if any
     }
 }

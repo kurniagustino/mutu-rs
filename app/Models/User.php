@@ -12,21 +12,30 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'users';
-
     protected $fillable = [
         'name',
-        'username',
         'email',
+        'username',
         'password',
         'NIP',
-        'id_ruang',
         'level',
+        'id_ruang',
     ];
 
-    protected $hidden = ['password'];
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
-    // ✅ OPTIMASI: Tambah eager loading untuk mencegah N+1
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    // ✅ EAGER LOAD departemen (prevent N+1 queries)
     protected $with = ['departemen'];
 
     public function departemen()
@@ -36,7 +45,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function getFilamentName(): string
     {
-        return $this->getAttribute('name') ?? ''; // <-- UBAH DI SINI
+        return $this->getAttribute('name') ?? '';
     }
 
     public function canAccessPanel(Panel $panel): bool
