@@ -13,6 +13,9 @@ class HospitalSurveyIndicator extends Model
 
     protected $primaryKey = 'indicator_id';
 
+    // Eager load otomatis untuk relasi yang sering dipakai
+    protected $with = ['imutCategory'];
+
     public $timestamps = false;
 
     /**

@@ -9,11 +9,11 @@ use App\Filament\Resources\Indicators\Schemas\IndicatorForm;
 use App\Filament\Resources\Indicators\Tables\IndicatorsTable;
 use App\Models\HospitalSurveyIndicator;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class IndicatorResource extends Resource
 {
@@ -23,7 +23,7 @@ class IndicatorResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'HospitalSurveyIndicator';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Master Data';
+    protected static string|UnitEnum|null $navigationGroup = 'Master Data';
 
     public static function form(Schema $schema): Schema
     {
@@ -51,4 +51,9 @@ class IndicatorResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes(); // ✅ Remove global scopes if any
+    }
 }

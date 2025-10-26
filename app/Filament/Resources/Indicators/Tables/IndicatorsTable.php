@@ -7,8 +7,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
 
 class IndicatorsTable
 {
@@ -18,9 +18,9 @@ class IndicatorsTable
             ->columns([
                 TextColumn::make('indicator_element')
                     ->label('Nama Indikator')
-                    ->searchable() 
-                    ->limit(50)    
-                    ->wrap(),      
+                    ->searchable()
+                    ->limit(50)
+                    ->wrap(),
 
                 // ✅ KOLOM JENIS IMUT DENGAN TEXT INPUT (BEBAS)
                 TextColumn::make('indicator_imut_type')
@@ -32,7 +32,7 @@ class IndicatorsTable
 
                 // KOLOM BARU DARI RELASI
                 TextColumn::make('imutCategory.imut')
-                ->badge()
+                    ->badge()
                     ->label('Kategori (Area)')
                     ->searchable(),
 
@@ -52,7 +52,7 @@ class IndicatorsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                 DeleteAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -9,11 +9,12 @@ use App\Filament\Resources\StatusKategoris\Schemas\StatusKategoriForm;
 use App\Filament\Resources\StatusKategoris\Tables\StatusKategorisTable;
 use App\Models\StatusKategori;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use UnitEnum; // ✅ TAMBAHKAN INI DI ATAS
 
 class StatusKategoriResource extends Resource
 {
@@ -21,10 +22,17 @@ class StatusKategoriResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string | UnitEnum | null $navigationGroup = 'Master Data';
+    protected static string|UnitEnum|null $navigationGroup = 'Master Data';
 
     protected static ?string $recordTitleAttribute = 'nama_status';
 
+    // ✅ PENTING: Eager load relationship dengan withCount
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withCount('indicators') // Eager load count indicators
+            ->orderBy('id', 'desc');   // Default sorting
+    }
 
     public static function form(Schema $schema): Schema
     {
