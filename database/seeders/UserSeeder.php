@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
@@ -14,12 +13,17 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-       User::create([
-        'name' => 'Admin PMKP', // <-- UBAH DI SINI
-        'username' => 'admin',
-        'email' => 'admin@gmail.com',
-        'password' => Hash::make('password'),
-        'level' => '1',
-    ]);
+        // 1. Buat User baru
+        $user = User::create([
+            'name' => 'Admin PMKP',
+            'username' => 'admin',
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('password'),
+            'level' => '1', // 'level' ini tidak apa-apa ada, tapi tidak dipakai Shield
+        ]);
+
+        // // 2. Berikan role 'super_admin' ke user tersebut
+        // // Ini adalah bagian yang paling PENTING
+        // $user->assignRole('super_admin');
     }
 }

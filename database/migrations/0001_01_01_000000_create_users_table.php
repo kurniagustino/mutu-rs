@@ -12,16 +12,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-        $table->increments('id');
-        $table->string('name', 50)->nullable(); // <-- PASTIKAN INI 'name'
-        $table->string('username', 50)->unique()->nullable();
-        $table->string('email')->unique();
-        $table->string('password', 255)->nullable();
-        $table->string('NIP')->nullable();      // <-- Kita tambahkan juga di sini
-        $table->string('level', 10)->nullable(); // <-- Kita tambahkan juga di sini
-        $table->integer('id_ruang')->nullable();
-        $table->rememberToken();
-        $table->timestamps();
+            $table->increments('id');
+            $table->string('name', 50)->nullable(); // <-- PASTIKAN INI 'name'
+            $table->string('username', 50)->unique()->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('password', 255)->nullable();
+            $table->string('NIP')->nullable();      // <-- Kita tambahkan juga di sini
+            $table->string('level', 10)->nullable(); // <-- Kita tambahkan juga di sini
+            $table->integer('id_ruang')->nullable();
+
+            // --- TAMBAHAN DARI users.sql ---
+            $table->string('identitas', 50)->nullable(); //
+            $table->integer('aktivasi')->nullable()->default(1); //
+            $table->integer('status')->nullable()->default(1); //
+            $table->string('fto', 50)->nullable(); //
+
+            // --- TAMBAHAN DARI pegawai.sql ---
+            $table->date('tgllahir')->nullable(); //
+            $table->string('tempatlahir', 50)->nullable(); //
+            $table->string('glr_depan', 50)->nullable(); //
+            $table->string('glr_blkg', 50)->nullable(); //
+            $table->string('alamat', 50)->nullable(); //
+            $table->string('pendidikan_terakhir', 50)->nullable(); //
+
+            $table->rememberToken();
+            $table->timestamps();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

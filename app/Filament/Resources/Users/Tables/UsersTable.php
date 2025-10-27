@@ -25,15 +25,23 @@ class UsersTable
                 TextColumn::make('departemen.nama_ruang')
                     ->label('Departemen')
                     ->sortable(),
-                TextColumn::make('level')
+                // ✅ 100% DYNAMIC - auto-format semua roles
+                TextColumn::make('roles.name')
+                    ->label('Roles')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        '1' => 'danger',
-                        '2' => 'success',
-                    })->formatStateUsing(fn (string $state): string => match ($state) {
-                        '1' => 'Admin',
-                        '2' => 'User',
-                    }),
+                    ->separator(',')
+                    ->formatStateUsing(fn (string $state): string => ucwords(str_replace('_', ' ', $state))
+                    )
+                    ->color(fn (string $state): string =>
+                        // Dynamic color based on role name pattern
+                        match (true) {
+                            str_contains(strtolower($state), 'admin') => 'danger',
+                            str_contains(strtolower($state), 'super') => 'warning',
+                            str_contains(strtolower($state), 'karu') => 'info',
+                            str_contains(strtolower($state), 'operator') => 'success',
+                            default => 'gray',
+                        }
+                    ),
             ])
             ->recordActions([
                 EditAction::make(),

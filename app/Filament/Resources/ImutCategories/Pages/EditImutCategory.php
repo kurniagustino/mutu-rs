@@ -16,4 +16,13 @@ class EditImutCategory extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    /**
+     * TAMBAHKAN METHOD DI BAWAH INI
+     * Mengubah redirect setelah create, agar kembali ke halaman index (list).
+     */
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
