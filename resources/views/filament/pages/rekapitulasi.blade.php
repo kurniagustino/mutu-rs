@@ -94,7 +94,7 @@
                                         @endif
                                     </td>
                                     <td class="px-3 py-4">
-                                        <x-filament::button tag="a" :href="route('filament.admin.pages.input-indikator')" color="primary"
+                                        <x-filament::button tag="a" :href="route('filament.admin.pages.input-mutu-indikator')" color="primary"
                                             size="sm" icon="heroicon-m-eye">
                                             Lihat
                                         </x-filament::button>

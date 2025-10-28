@@ -22,7 +22,8 @@ return new class extends Migration
             $table->date('result_period');
             $table->dateTime('result_post_date');
             $table->char('result_record_status', 1)->default('A');
-            $table->string('last_edited_by', 5);
+            // MENJADI INI (buat jadi 100 dan boleh null):
+            $table->string('last_edited_by', 100)->nullable();
         });
     }
 

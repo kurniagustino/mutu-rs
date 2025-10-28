@@ -3,10 +3,10 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\InputMutuIndikator;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Pages\LaporanPendataanPerbulan;
 use App\Filament\Pages\Rekapitulasi;
 use App\Livewire\LoginController;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -37,6 +37,9 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
+            // LOKASI PENTING UNTUK MENGUBAH TEKS
+            ->brandName('INDIKATOR MUTU RSB JAMBI')
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -45,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
                 Rekapitulasi::class,
                 LaporanPendataanPerbulan::class, // ✅ TAMBAHKAN INI
             ])
-            // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
             ])
