@@ -27,12 +27,8 @@ return new class extends Migration
                 // Index sudah ada, skip
             }
 
-            // Index untuk id_ruang (foreign key ke departemen)
-            try {
-                $table->index('id_ruang', 'users_id_ruang_index');
-            } catch (\Exception $e) {
-                // Index sudah ada, skip
-            }
+            // HAPUS BLOK 'id_ruang' DARI SINI
+
         });
 
         // ✅ TAMBAH INDEX KE TABLE DEPARTEMEN (kalau ada)
@@ -65,11 +61,8 @@ return new class extends Migration
                 // Index tidak ada, skip
             }
 
-            try {
-                $table->dropIndex('users_id_ruang_index');
-            } catch (\Exception $e) {
-                // Index tidak ada, skip
-            }
+            // HAPUS BLOK 'id_ruang' DARI SINI JUGA
+
         });
 
         if (Schema::hasTable('departemen')) {

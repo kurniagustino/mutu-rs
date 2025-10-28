@@ -18,8 +18,6 @@ return new class extends Migration
             $table->string('email')->unique()->nullable();
             $table->string('password', 255)->nullable();
             $table->string('NIP')->nullable();      // <-- Kita tambahkan juga di sini
-            $table->string('level', 10)->nullable(); // <-- Kita tambahkan juga di sini
-            $table->integer('id_ruang')->nullable();
 
             // --- TAMBAHAN DARI users.sql ---
             $table->string('identitas', 50)->nullable(); //

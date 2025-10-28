@@ -102,8 +102,10 @@ class MigrasiUsersLama extends Command
                 'email' => $emailBaru,
                 'password' => $passwordBaru, // Password baru (Bcrypt)
                 'NIP' => $user->nip_nrp,
-                'level' => $user->level,
-                'id_ruang' => null,
+
+                // 'level' => $user->level,      // <-- INI SUDAH SAYA HAPUS
+                // 'id_ruang' => null,            // <-- INI SUDAH SAYA HAPUS
+
                 'identitas' => $user->identitas,
                 'aktivasi' => $user->aktivasi,
                 'status' => $user->status,

@@ -1,30 +1,33 @@
 <?php
 
-namespace App\Models; // ✅ SUDAH BENAR (pakai backslash \)
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HospitalSurveyIndicatorResult extends Model
 {
-    // ✅ NAMA TABEL
     protected $table = 'hospital_survey_indicator_result';
 
-    // ✅ PRIMARY KEY
     protected $primaryKey = 'result_id';
 
-    // ✅ NONAKTIFKAN TIMESTAMPS
-    public $timestamps = false;
+    // ✅ ENABLE TIMESTAMPS (created_at & updated_at)
+    public $timestamps = true;
 
     protected $fillable = [
         'result_indicator_id',
         'result_department_id',
-        'result_period',
         'result_numerator_value',
         'result_denumerator_value',
+        'result_period',
         'result_post_date',
         'result_record_status',
         'last_edited_by',
+    ];
+
+    protected $casts = [
+        'result_period' => 'date',
+        'result_post_date' => 'datetime',
     ];
 
     /**
@@ -36,7 +39,7 @@ class HospitalSurveyIndicatorResult extends Model
     }
 
     /**
-     * Relasi ke Departemen (jika ada)
+     * Relasi ke Departemen
      */
     public function department(): BelongsTo
     {
@@ -44,7 +47,7 @@ class HospitalSurveyIndicatorResult extends Model
     }
 
     /**
-     * Relasi ke User yang terakhir edit (jika ada)
+     * Relasi ke User yang edit
      */
     public function editor(): BelongsTo
     {
@@ -52,29 +55,19 @@ class HospitalSurveyIndicatorResult extends Model
     }
 
     /**
-     * ============================================
-     * ## 2. GANTI DENGAN BLOK LOGIKA INI ##
-     * ============================================
-     *
-     * Accessor KLASIK untuk menghitung persentase secara otomatis.
-     * Ini akan membuat properti "virtual" bernama $model->persentase
+     * Accessor untuk persentase
      */
     public function getPersentaseAttribute()
     {
-        // Ambil nilai Ne dan De
         $nemu = (float) $this->result_numerator_value;
         $demu = (float) $this->result_denumerator_value;
 
-        // Mencegah pembagian dengan nol (Division by Zero)
         if ($demu == 0) {
-            return 0.00; // Jika demu 0, hasil otomatis 0
+            return 0.00;
         }
 
-        // Jika aman, jalankan formula
         $hasil = ($nemu / $demu) * 100;
 
-        // Dibulatkan 2 angka di belakang koma
         return round($hasil, 2);
     }
-
 }

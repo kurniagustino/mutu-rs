@@ -17,9 +17,9 @@ return new class extends Migration
             $table->unsignedInteger('id_indikator')->nullable();
             $table->integer('status')->nullable();
             $table->timestamp('created')->nullable();
-            $table->string('tahun', 45)->nullable();
-            $table->string('statuspmkp', 45)->nullable();
-            $table->string('tambahan', 45)->nullable();
+            $table->string('tahun', 4)->nullable();
+            $table->string('statuspmkp', 50)->nullable();
+            $table->string('tambahan', 110)->nullable();
         });
     }
 

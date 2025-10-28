@@ -2,34 +2,58 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Departemen extends Model
 {
-    use HasFactory;
-
     protected $table = 'departemen';
+
     protected $primaryKey = 'id_ruang';
-    public $timestamps = false;
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
 
     protected $fillable = [
+        'id_ruang',
         'nama_ruang',
-        'id_unit',
-        'sink',
     ];
 
     /**
-     * Pastikan relasi ini ada dan bernama 'indicators'
+     * Relasi ke Indikator (many-to-many)
      */
-    public function indicators()
+    public function indikator()
     {
-        return $this->belongsToMany(\App\Models\HospitalSurveyIndicator::class, 'mapping_indikator_unit', 'id_unit', 'id_indikator');
+        return $this->belongsToMany(
+            \App\Models\HospitalSurveyIndicator::class,
+            'mapping_indikator_unit',
+            'id_unit',
+            'id_indikator'
+        );
     }
 
-    // Tambahkan accessor ini
+    /**
+     * ✅ NEW: Relasi ke Users (many-to-many via mapping_pengguna_unit)
+     */
+    public function users()
+    {
+        return $this->belongsToMany(
+            \App\Models\User::class,
+            'mapping_pengguna_unit',
+            'id_ruang',
+            'user_id',
+            'id_ruang',
+            'id'
+        )
+            ->withPivot('level')
+            ->withTimestamps();
+    }
+
+    /**
+     * Accessor untuk compatibility
+     */
     public function getNamaUnitAttribute()
     {
-        return $this->nama_ruang; // atau field yang benar
+        return $this->nama_ruang;
     }
 }
