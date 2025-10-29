@@ -29,17 +29,19 @@
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" />
                 </div>
 
-                {{-- Filter Area Monitoring --}}
+                {{-- Filter Kategori Area IMUT --}}
                 <div>
+                    {{-- ✅ Label diubah --}}
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        📍 Area Monitoring
+                        📍 Area IMUT
                     </label>
-                    <select wire:model.live="filterArea"
+                    {{-- ✅ wire:model diubah --}}
+                    <select wire:model.live="filterCategory"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                        <option value="">Semua Area</option>
-                        {{-- Pastikan $availableAreas dikirim --}}
-                        @foreach ($availableAreas ?? [] as $area)
-                            <option value="{{ $area }}">{{ $area }}</option>
+                        <option value="">Semua Area IMUT</option>
+                        {{-- ✅ Foreach dan variabel diubah --}}
+                        @foreach ($availableCategories as $category)
+                            <option value="{{ $category }}">{{ $category }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -80,84 +82,96 @@
         {{-- Cards Grid Indikator --}}
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             @forelse($indicators as $indicator)
+                {{-- ✅ Ganti class card luar --}}
                 <div
-                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition flex flex-col">
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition flex flex-col">
+
+                    {{-- ✅ Konten utama card (tanpa header terpisah) --}}
                     <div class="p-6 flex flex-col flex-1">
-                        {{-- Info Jenis & Area IMUT --}}
-                        <div class="mb-4 space-y-2">
-                            @if ($indicator->indicator_imut_type)
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        class="text-xs font-semibold text-gray-500 dark:text-gray-400 min-w-[80px]">Jenis
-                                        IMUT:</span>
-                                    <span
-                                        class="inline-flex items-center rounded-md bg-indigo-100 dark:bg-indigo-900 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-                                        {{ $indicator->indicator_imut_type }}
-                                    </span>
-                                </div>
-                            @endif
-                            @if ($indicator->imutCategory)
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        class="text-xs font-semibold text-gray-500 dark:text-gray-400 min-w-[80px]">IMUT
-                                        Area:</span>
-                                    <span class="text-xs font-medium text-primary-600 dark:text-primary-400">
-                                        {{ $indicator->imutCategory->getCategoryNameAttribute() }}
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
+
                         {{-- Judul Indikator --}}
-                        <div class="flex items-start gap-3 mb-4">
-                            @if ($indicator->status_kunci == 1)
-                                <x-filament::icon icon="heroicon-o-key"
-                                    class="w-5 h-5 text-warning-500 flex-shrink-0 mt-0.5" />
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-tight">
+                            {{ $indicator->indicator_element }}
+                        </h3>
+
+                        {{-- Badges Section --}}
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            {{-- Badge Tipe Indikator (Pakai badge gray) --}}
+                            <x-filament::badge color="gray" size="sm">
+                                {{ $indicator->indicator_type }}
+                            </x-filament::badge>
+
+                            {{-- Badge Kategori Area IMUT (Pakai badge primary) --}}
+                            @if ($indicator->imutCategory)
+                                <x-filament::badge color="primary" size="sm">
+                                    Area: {{ $indicator->imutCategory->getCategoryNameAttribute() }}
+                                </x-filament::badge>
                             @endif
-                            <div class="flex-1 min-w-0">
-                                <h3 class="text-base font-bold text-gray-900 dark:text-white leading-tight mb-2">
-                                    {{ $indicator->indicator_element }}
-                                </h3>
-                            </div>
+
+                            {{-- Badge Unit (Pakai badge success) --}}
+                            @if ($indicator->departemens->isNotEmpty())
+                                <x-filament::badge color="success" size="sm" :title="$indicator->departemens->pluck('nama_unit')->join(', ')">
+                                    {{-- Tampilkan 1 unit, sisanya di tooltip --}}
+                                    Unit: {{ $indicator->departemens->first()->nama_unit }}
+                                    @if ($indicator->departemens->count() > 1)
+                                        (+{{ $indicator->departemens->count() - 1 }})
+                                    @endif
+                                </x-filament::badge>
+                            @endif
                         </div>
-                        {{-- Tipe & Area Monitor --}}
-                        <div class="space-y-1 mb-3">
-                            <p class="text-xs text-pink-600 dark:text-pink-400">
-                                Tipe: {{ $indicator->indicator_type }} |
-                                Area: {{ $indicator->indicator_monitoring_area ?? 'N/A' }}
-                            </p>
-                        </div>
-                        {{-- Kategori Badges --}}
-                        <div class="mb-4 min-h-[50px]">
-                            <div class="flex items-start gap-1.5 mb-2">
-                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Kategori:</span>
+
+                        {{-- Info Tambahan (Target, Frekuensi) --}}
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+                            <div class="text-gray-600 dark:text-gray-400 font-medium">Target:</div>
+                            <div class="text-gray-900 dark:text-white font-semibold">
+                                {{ $indicator->indicator_target ?? '0' }}%</div>
+
+                            <div class="text-gray-600 dark:text-gray-400 font-medium">Frekuensi:</div>
+                            <div class="text-gray-900 dark:text-white">{{ $indicator->indicator_frequency ?? 'N/A' }}
                             </div>
-                            <div class="flex flex-wrap gap-1.5">
-                                @forelse($indicator->statuses as $status)
-                                    <span
-                                        class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold text-white"
-                                        style="background-color: {{ $status->warna_badge }};">
-                                        {{ $status->nama_status }}
-                                    </span>
-                                @empty
-                                    <span class="text-xs text-gray-400 italic">N/A</span>
-                                @endforelse
-                            </div>
+
+                            @if ($indicator->indicator_monitoring_area)
+                                <div class="text-gray-600 dark:text-gray-400 font-medium">Area Monitor:</div>
+                                <div class="text-gray-900 dark:text-white">{{ $indicator->indicator_monitoring_area }}
+                                </div>
+                            @endif
                         </div>
-                        {{-- Download --}}
-                        <div class="mt-auto">
+
+                        {{-- Kategori Status Badges (jika ada) --}}
+                        @if ($indicator->statuses->isNotEmpty())
+                            <div class="mb-4">
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Status:</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($indicator->statuses as $status)
+                                        <span
+                                            class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold text-white"
+                                            style="background-color: {{ $status->warna_badge }};">
+                                            {{ $status->nama_status }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Download Form Manual (Pindah ke paling bawah konten) --}}
+                        <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
                             @if ($indicator->files)
                                 <a href="{{ Storage::disk('public')->url($indicator->files) }}" target="_blank"
-                                    class="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline">
-                                    📥 Unduh Form Manual
+                                    class="inline-flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium hover:underline">
+                                    <x-heroicon-o-arrow-down-tray class="w-4 h-4" /> Unduh Form Manual
                                 </a>
                             @else
-                                <div class="inline-flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">⚠️
-                                    Manual N/A</div>
+                                <div class="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                    <x-heroicon-o-x-circle class="w-4 h-4 text-danger-500" /> Manual Belum Ada
+                                </div>
                             @endif
                         </div>
                     </div>
-                    {{-- Tombol Aksi --}}
-                    <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+
+                    {{-- Tombol Aksi Footer (Tetap sama) --}}
+                    <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                         <div class="flex flex-col gap-2">
                             <div class="flex gap-2">
                                 <x-filament::button color="warning" size="sm"
@@ -441,7 +455,8 @@
             @endif
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-300 dark:border-gray-600 mt-6">
                 <x-filament::button type="button" color="gray"
-                    wire:click="$dispatch('close-modal', { id: 'persentase-modal' })">Tutup</x-filament::button></div>
+                    wire:click="$dispatch('close-modal', { id: 'persentase-modal' })">Tutup</x-filament::button>
+            </div>
         @endif
     </x-filament::modal>
 
@@ -613,7 +628,8 @@
                                                 class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $stat['bulan'] }}</span>
                                             <span
                                                 class="text-sm font-bold text-blue-700 dark:text-blue-300">{{ $stat['jumlah_pengisian'] }}
-                                                Data</span></div>
+                                                Data</span>
+                                        </div>
                                     @endforeach
                                 </div>
                             @else<p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Belum ada
@@ -658,7 +674,8 @@
             </div>
             <div class="flex justify-end gap-3 pt-6 border-t border-gray-300 dark:border-gray-600 mt-6">
                 <x-filament::button type="button" color="gray"
-                    wire:click="$dispatch('close-modal', { id: 'rekap-modal' })">Tutup</x-filament::button></div>
+                    wire:click="$dispatch('close-modal', { id: 'rekap-modal' })">Tutup</x-filament::button>
+            </div>
         @endif
     </x-filament::modal>
 
