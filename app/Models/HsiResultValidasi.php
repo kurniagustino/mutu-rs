@@ -6,29 +6,31 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class HospitalSurveyIndicatorResult extends Model
+class HsiResultValidasi extends Model
 {
     use HasFactory;
 
-    protected $table = 'hospital_survey_indicator_result';
+    protected $table = 'hsi_result_validasi';
 
     protected $primaryKey = 'result_id';
 
-    public $timestamps = true;
+    public $timestamps = false; // Tabel old tidak pakai created_at/updated_at
 
     protected $fillable = [
         'result_indicator_id',
         'result_department_id',
-        'result_period',
         'result_numerator_value',
         'result_denumerator_value',
-        'result_record_status',
+        'rn_rekap_valid',
+        'rd_rekap_valid',
+        'validasi_pmkp',
+        'result_period',
         'result_post_date',
+        'result_record_status',
         'last_edited_by',
     ];
 
     protected $casts = [
-        'result_period' => 'date',
         'result_post_date' => 'datetime',
     ];
 
@@ -42,7 +44,6 @@ class HospitalSurveyIndicatorResult extends Model
 
     /**
      * Relasi ke Departemen
-     * ✅ FIX: Pakai ::class untuk avoid "Undefined constant" error
      */
     public function department(): BelongsTo
     {
@@ -54,23 +55,6 @@ class HospitalSurveyIndicatorResult extends Model
      */
     public function editor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'last_edited_by');
-    }
-
-    /**
-     * Accessor untuk persentase
-     */
-    public function getPersentaseAttribute()
-    {
-        $nemu = (float) $this->result_numerator_value;
-        $demu = (float) $this->result_denumerator_value;
-
-        if ($demu == 0) {
-            return 0.00;
-        }
-
-        $hasil = ($nemu / $demu) * 100;
-
-        return round($hasil, 2);
+        return $this->belongsTo(User::class, 'last_edited_by', 'id');
     }
 }

@@ -2,10 +2,12 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Dashboard as CustomDashboard; // ✅ IMPORT CUSTOM DASHBOARD
+use App\Filament\Pages\Dashboard as CustomDashboard;
 use App\Filament\Pages\InputMutuIndikator;
 use App\Filament\Pages\LaporanPendataanPerbulan;
 use App\Filament\Pages\Rekapitulasi;
+use App\Filament\Pages\Validasi;
+use App\Filament\Pages\ValidasiDetail;
 use App\Livewire\LoginController;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
@@ -36,6 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
+            ->favicon(asset('images/rsb.png'))
             ->brandName('INDIKATOR MUTU RSB JAMBI')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -44,6 +47,8 @@ class AdminPanelProvider extends PanelProvider
                 InputMutuIndikator::class,
                 Rekapitulasi::class,
                 LaporanPendataanPerbulan::class,
+                Validasi::class,
+                ValidasiDetail::class, // ✅ TAMBAHKAN INI
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
