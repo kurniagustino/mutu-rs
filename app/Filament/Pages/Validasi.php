@@ -10,40 +10,62 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
-use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class Validasi extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+    // ✅ BENAR: static untuk navigationIcon
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-check-circle';
 
-    protected static ?string $navigationLabel = 'Validasi';
-
-    protected static string|UnitEnum|null $navigationGroup = 'PMKP';
-
+    // ✅ PERBAIKAN: NON-STATIC untuk $view (tanpa kata "static")
     protected string $view = 'filament.pages.validasi';
 
-    public ?array $filterData = [];
+    // ✅ BENAR: static untuk navigationGroup
+    protected static string|UnitEnum|null $navigationGroup = 'PMKP';
 
-    public $selectedCategory = null;
-
-    public $selectedYear = null;
-
-    public $selectedMonth = null;
+    protected static ?int $navigationSort = 2;
 
     public $validationData = [];
+
+    public $filterData = [];
+
+    public $selectedCategory;
+
+    public $selectedYear;
+
+    public $selectedMonth;
+
+    // Properties untuk modal validasi
+    public $showValidasiModal = false;
+
+    public $selectedIndicatorId = null;
+
+    public $selectedIndicatorData = null;
+
+    public $validasiForm = [
+        'periode' => '',
+        'numerator_rill' => '',
+        'denominator_rill' => '',
+        'numerator_sampling' => '',
+        'denominator_sampling' => '',
+        'status_cocok' => true,
+    ];
 
     public function mount(): void
     {
         $this->selectedYear = date('Y');
+
         $this->selectedMonth = date('m');
+
         $this->filterData = [
             'category_id' => null,
             'year' => $this->selectedYear,
             'month' => $this->selectedMonth,
         ];
+
         $this->loadData();
     }
 
@@ -116,11 +138,13 @@ class Validasi extends Page implements HasForms
 
         $this->validationData = $indicators->map(function ($indicator) use ($year, $month) {
             $results = $indicator->results;
+
             $numerator = $results->map(fn ($r) => (int) $r->result_numerator_value)->sum();
             $denominator = $results->map(fn ($r) => (int) $r->result_denumerator_value)->sum();
             $persentase = $denominator > 0 ? round(($numerator / $denominator) * 100, 2) : 0;
 
-            $periode = $year.'-'.$month;
+            $periode = $year.'-'.str_pad($month, 2, '0', STR_PAD_LEFT);
+
             $validasi = ValidasiModel::where('imut', $indicator->indicator_id)
                 ->where('periodevalidasi', $periode)
                 ->first();
@@ -152,17 +176,116 @@ class Validasi extends Page implements HasForms
         );
     }
 
-    // Placeholder untuk validasi (nanti)
+    // Method untuk modal validasi
     public function openValidasiModal($indicatorId)
     {
-        // TODO: implement
+        $this->selectedIndicatorId = $indicatorId;
+
+        // Cari data indicator dari validationData
+        $indicatorData = collect($this->validationData)
+            ->firstWhere('indicator_id', $indicatorId);
+
+        if ($indicatorData) {
+            $this->selectedIndicatorData = $indicatorData;
+
+            $periode = $this->selectedYear.'-'.str_pad($this->selectedMonth, 2, '0', STR_PAD_LEFT);
+
+            // Load existing validation jika ada
+            $existingValidasi = ValidasiModel::where('imut', $indicatorId)
+                ->where('periodevalidasi', $periode)
+                ->first();
+
+            $this->validasiForm = [
+                'periode' => $periode,
+                'numerator_rill' => $existingValidasi ? $existingValidasi->nemurator : $indicatorData['numerator'],
+                'denominator_rill' => $existingValidasi ? $existingValidasi->denumerator : $indicatorData['denominator'],
+                'numerator_sampling' => $existingValidasi ? $existingValidasi->nemurator_sampling : '',
+                'denominator_sampling' => $existingValidasi ? $existingValidasi->denumerator_sampling : '',
+                'status_cocok' => $existingValidasi ? (bool) $existingValidasi->status_cocok : true,
+            ];
+        }
+
+        $this->showValidasiModal = true;
+
+        // ✅ TAMBAHAN: Dispatch event untuk buka modal (cara referensi)
+        $this->dispatch('open-modal', id: 'validasi-modal');
+    }
+
+    public function closeValidasiModal()
+    {
+        $this->showValidasiModal = false;
+        $this->selectedIndicatorId = null;
+        $this->selectedIndicatorData = null;
+        $this->resetValidasiForm();
+
+        // ✅ TAMBAHAN: Dispatch event untuk tutup modal
+        $this->dispatch('close-modal', id: 'validasi-modal');
+    }
+
+    private function resetValidasiForm()
+    {
+        $this->validasiForm = [
+            'periode' => '',
+            'numerator_rill' => '',
+            'denominator_rill' => '',
+            'numerator_sampling' => '',
+            'denominator_sampling' => '',
+            'status_cocok' => true,
+        ];
+    }
+
+    public function saveValidasi()
+    {
+        // Validation
+        $rules = [
+            'validasiForm.numerator_rill' => 'required|numeric',
+            'validasiForm.denominator_rill' => 'required|numeric',
+        ];
+
+        // Jika tidak cocok, sampling wajib diisi
+        if (! $this->validasiForm['status_cocok']) {
+            $rules['validasiForm.numerator_sampling'] = 'required|numeric';
+            $rules['validasiForm.denominator_sampling'] = 'required|numeric';
+        }
+
+        $this->validate($rules);
+
+        // Save or update
+        ValidasiModel::updateOrCreate(
+            [
+                'imut' => $this->selectedIndicatorId,
+                'periodevalidasi' => $this->validasiForm['periode'],
+            ],
+            [
+                'nemurator' => $this->validasiForm['numerator_rill'],
+                'denumerator' => $this->validasiForm['denominator_rill'],
+                'nemurator_sampling' => $this->validasiForm['status_cocok'] ? null : $this->validasiForm['numerator_sampling'],
+                'denumerator_sampling' => $this->validasiForm['status_cocok'] ? null : $this->validasiForm['denominator_sampling'],
+                'hasil_validasi' => true,
+                'status_cocok' => $this->validasiForm['status_cocok'],
+                'validated_by' => Auth::id(),
+                'validated_at' => now(),
+            ]
+        );
+
+        // Reload data
+        $this->loadData();
+
+        // Close modal
+        $this->closeValidasiModal();
+
+        // Success notification
+        \Filament\Notifications\Notification::make()
+            ->title('Validasi berhasil disimpan')
+            ->success()
+            ->send();
     }
 
     public function getTitle(): string
     {
         return 'Tabel Data Indikator Mutu Bulan Periode '.
-               $this->selectedYear.'-'.
-               str_pad($this->selectedMonth, 2, '0', STR_PAD_LEFT);
+            $this->selectedYear.'-'.
+            str_pad($this->selectedMonth, 2, '0', STR_PAD_LEFT);
     }
 
     protected function getHeaderActions(): array

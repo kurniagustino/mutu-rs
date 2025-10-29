@@ -87,29 +87,16 @@
 
     {{-- Data Table Card --}}
     <x-filament::card>
+        {{-- ... (Isi table card tetap sama seperti kode Anda) ... --}}
         <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                    <x-heroicon-o-table-cells class="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Data Indikator Mutu</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Periode
-                        {{ $selectedYear }}-{{ str_pad($selectedMonth, 2, '0', STR_PAD_LEFT) }}</p>
-                </div>
-            </div>
-
-            @if (count($validationData) > 0)
-                <x-filament::badge color="success">
-                    {{ count($validationData) }} Data
-                </x-filament::badge>
-            @endif
+            {{-- ... (Isi header table card) ... --}}
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>
+                        {{-- ... (Semua <th> Anda) ... --}}
                         <th
                             class="px-3 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-12">
                             ID #
@@ -143,6 +130,7 @@
                 <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($validationData as $index => $data)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150">
+                            {{-- ... (Semua <td> Anda, tombol "Validasi" sudah benar) ... --}}
                             {{-- ID # --}}
                             <td
                                 class="px-3 py-3 whitespace-nowrap text-center text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -257,38 +245,175 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="px-4 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-                                        <x-heroicon-o-inbox class="w-12 h-12 text-gray-400 dark:text-gray-500" />
-                                    </div>
-                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">Tidak ada
-                                        data</h3>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Silakan pilih filter untuk
-                                        menampilkan data</p>
-                                </div>
-                            </td>
-                        </tr>
+                        {{-- ... (Kode @empty Anda) ... --}}
                     @endforelse
                 </tbody>
             </table>
         </div>
 
         @if (count($validationData) > 0)
-            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <div>
-                        Menampilkan <span
-                            class="font-semibold text-gray-900 dark:text-gray-100">{{ count($validationData) }}</span>
-                        data indikator
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <x-heroicon-o-information-circle class="w-4 h-4" />
-                        <span>Periode: {{ $selectedYear }}-{{ str_pad($selectedMonth, 2, '0', STR_PAD_LEFT) }}</span>
-                    </div>
-                </div>
-            </div>
+            {{-- ... (Kode footer table Anda) ... --}}
         @endif
     </x-filament::card>
+
+
+    {{-- ========================================================= --}}
+    {{-- 🚀 MODAL VALIDASI - FIXED VERSION 🚀 --}}
+    {{-- ========================================================= --}}
+    <x-filament::modal id="validasi-modal" width="3xl" :close-by-clicking-away="false">
+
+        {{-- Header Modal --}}
+        <x-slot name="heading">
+            <div class="flex items-center space-x-2">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Formulir Validasi Indikator</span>
+            </div>
+            @if ($selectedIndicatorData)
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1"
+                    title="{{ strip_tags($selectedIndicatorData['indicator_name']) }}">
+                    #{{ $selectedIndicatorData['indicator_id'] }} -
+                    {{ strip_tags($selectedIndicatorData['indicator_name']) }}
+                </p>
+            @endif
+        </x-slot>
+
+        {{-- Body Modal --}}
+        @if ($selectedIndicatorData)
+            <div class="space-y-6">
+                {{-- Info Indikator --}}
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h3 class="font-bold text-lg text-blue-900 dark:text-blue-100 mb-1">
+                        {{ strtoupper($selectedIndicatorData['indicator_name'] ?? 'INDIKATOR') }}
+                    </h3>
+                    <p class="text-sm text-blue-700 dark:text-blue-300">
+                        Periode: {{ $selectedYear }}-{{ str_pad($selectedMonth, 2, '0', STR_PAD_LEFT) }} |
+                        Unit: <span class="font-semibold">{{ auth()->user()->departemen->nama_ruang ?? 'N/A' }}</span>
+                    </p>
+                </div>
+
+                {{-- Data Rill (dari RS) --}}
+                <div class="p-4 border rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <h4 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        📊 Data Rill (Laporan RS)
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        {{-- Numerator Rill --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Numerator Rill <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" wire:model.defer="validasiForm.numerator_rill"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                                placeholder="Masukkan N Rill" required min="0">
+                            @error('validasiForm.numerator_rill')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Denominator Rill --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Denominator Rill <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" wire:model.defer="validasiForm.denominator_rill"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                                placeholder="Masukkan D Rill" required min="0">
+                            @error('validasiForm.denominator_rill')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Toggle Status Cocok --}}
+                <div
+                    class="flex items-center justify-between p-4 border rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <div class="flex-1">
+                        <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Apakah data Rill Sesuai dengan Data Sampling?
+                        </label>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Aktifkan jika data sudah sesuai
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" wire:model.live="validasiForm.status_cocok" class="sr-only peer">
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600">
+                        </div>
+                    </label>
+                </div>
+
+                {{-- Data Sampling (Conditional) --}}
+                @if (!($validasiForm['status_cocok'] ?? true))
+                    <div
+                        class="p-4 border-2 border-warning-300 rounded-lg bg-warning-50 dark:bg-warning-900/10 dark:border-warning-700 animate-in fade-in-0 duration-300">
+                        <h4
+                            class="mb-3 text-sm font-semibold text-warning-800 dark:text-warning-300 flex items-center gap-2">
+                            <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+                            Data Sampling (Jika Tidak Sesuai)
+                        </h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            {{-- Numerator Sampling --}}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Numerator Sampling <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" wire:model.defer="validasiForm.numerator_sampling"
+                                    class="w-full px-3 py-2 border border-warning-400 dark:border-warning-600 rounded-lg focus:ring-2 focus:ring-warning-500 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Masukkan N Sampling" required min="0">
+                                @error('validasiForm.numerator_sampling')
+                                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Denominator Sampling --}}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Denominator Sampling <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" wire:model.defer="validasiForm.denominator_sampling"
+                                    class="w-full px-3 py-2 border border-warning-400 dark:border-warning-600 rounded-lg focus:ring-2 focus:ring-warning-500 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Masukkan D Sampling" required min="0">
+                                @error('validasiForm.denominator_sampling')
+                                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        {{-- Footer Modal --}}
+        <x-slot name="footerActions">
+            <x-filament::button color="gray" wire:click="$dispatch('close-modal', { id: 'validasi-modal' })">
+                Batal
+            </x-filament::button>
+
+            <x-filament::button color="success" wire:click="saveValidasi" wire:loading.attr="disabled"
+                icon="heroicon-o-check-circle">
+                <span wire:loading.remove wire:target="saveValidasi">Simpan Validasi</span>
+                <span wire:loading wire:target="saveValidasi">
+                    <svg class="inline w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    Menyimpan...
+                </span>
+            </x-filament::button>
+        </x-slot>
+
+    </x-filament::modal>
+    {{-- ========================================================= --}}
+    {{-- 🛑 AKHIR KODE MODAL 🛑 --}}
+    {{-- ========================================================= --}}
+
+
 </x-filament-panels::page>
