@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-            Schema::create('imut_category', function (Blueprint $table) {
+        Schema::create('imut_category', function (Blueprint $table) {
             $table->increments('imut_category_id');
-            $table->string('imut', 100)->nullable();
+            $table->string('imut_name_category', 100)->nullable();
+            $table->timestamps();
         });
     }
 

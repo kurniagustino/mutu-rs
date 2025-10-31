@@ -32,7 +32,7 @@ class UsersTable
                     ->searchable(),
 
                 // ✅ UPDATED: Display multiple departemens (tidak diubah)
-                TextColumn::make('departemens.nama_ruang')
+                TextColumn::make('ruangans.nama_ruang') // 👈 PERBAIKAN #1
                     ->label('Departemen')
                     ->badge()
                     ->separator(',')
@@ -40,10 +40,10 @@ class UsersTable
                     ->wrap(),
 
                 // ✅ NEW: Display level dari pivot table (tidak diubah)
-                TextColumn::make('departemens')
+                TextColumn::make('ruangans') // 👈 PERBAIKAN #2
                     ->label('Level')
                     ->formatStateUsing(function ($record) {
-                        return $record->departemens
+                        return $record->ruangans // 👈 PERBAIKAN #3
                             ->pluck('pivot.level')
                             ->filter()
                             ->map(fn ($level) => ucfirst($level))
@@ -123,8 +123,8 @@ class UsersTable
             ])
             ->filters([
                 // ✅ Existing filters (tidak diubah)
-                SelectFilter::make('departemen')
-                    ->relationship('departemens', 'nama_ruang')
+                SelectFilter::make('ruangan') // (Lebih baik ganti nama 'key' nya juga)
+                    ->relationship('ruangans', 'nama_ruang') // 👈 PERBAIKAN #4
                     ->searchable()
                     ->preload()
                     ->label('Filter by Departemen'),

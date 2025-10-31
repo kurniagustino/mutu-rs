@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// 👈 1. TAMBAHKAN INI
+
 class HospitalSurveyIndicatorResult extends Model
 {
     use HasFactory;
@@ -41,12 +43,16 @@ class HospitalSurveyIndicatorResult extends Model
     }
 
     /**
-     * Relasi ke Departemen
-     * ✅ FIX: Pakai ::class untuk avoid "Undefined constant" error
+     * =============================================
+     * ## 2. PERBAIKAN DI SINI ##
+     * =============================================
+     * Relasi ke Ruangan (menggantikan Departemen)
      */
-    public function department(): BelongsTo
+    public function ruangan(): BelongsTo
     {
-        return $this->belongsTo(Departemen::class, 'result_department_id', 'id_ruang');
+        // 'result_department_id' adalah foreign key di tabel INI
+        // 'id_ruang' adalah primary key di tabel TUJUAN (ruangan)
+        return $this->belongsTo(Ruangan::class, 'result_department_id', 'id_ruang');
     }
 
     /**

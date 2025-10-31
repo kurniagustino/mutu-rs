@@ -15,7 +15,7 @@ class TrendCapaianMutuChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $idRuang = $user->id_ruang;
+        $idUnit = $user->ruangan_utama->id_unit ?? null; // 👈 LOGIKA BARU
         $year = now()->year;
 
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -24,8 +24,8 @@ class TrendCapaianMutuChart extends ChartWidget
         for ($month = 1; $month <= 12; $month++) {
             $count = HospitalSurveyIndicatorResult::whereYear('result_post_date', $year)
                 ->whereMonth('result_post_date', $month)
-                ->whereHas('indicator.departemens', function ($q) use ($idRuang) {
-                    $q->where('id_ruang', $idRuang);
+                ->whereHas('indicator.units', function ($q) use ($idUnit) { // 👈 PERBAIKAN
+                    $q->where('unit.id', $idUnit); // 👈 PERBAIKAN
                 })
                 ->count();
 

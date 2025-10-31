@@ -13,12 +13,12 @@ class StatusCapaianChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $idRuang = $user->id_ruang;
+        $idUnit = $user->ruangan_utama->id_unit ?? null; // 👈 LOGIKA BARU
         $year = now()->year;
 
         $total = HospitalSurveyIndicatorResult::whereYear('result_post_date', $year)
-            ->whereHas('indicator.departemens', function ($q) use ($idRuang) {
-                $q->where('id_ruang', $idRuang);
+            ->whereHas('indicator.units', function ($q) use ($idUnit) { // 👈 PERBAIKAN
+                $q->where('unit.id', $idUnit); // 👈 PERBAIKAN
             })
             ->count();
 

@@ -13,15 +13,15 @@ class DistribusiKategoriChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $idRuang = $user->id_ruang;
+        $idUnit = $user->ruangan_utama->id_unit ?? null; // 👈 LOGIKA BARU
         $year = now()->year;
 
-        $categories = ImutCategory::withCount(['indicators as total_results' => function ($q) use ($idRuang, $year) {
+        $categories = ImutCategory::withCount(['indicators as total_results' => function ($q) use ($idUnit, $year) {
             $q->whereHas('results', function ($q2) use ($year) {
                 $q2->whereYear('result_post_date', $year);
             })
-                ->whereHas('departemens', function ($q3) use ($idRuang) {
-                    $q3->where('id_ruang', $idRuang);
+                ->whereHas('units', function ($q3) use ($idUnit) { // 👈 PERBAIKAN
+                    $q3->where('unit.id', $idUnit); // 👈 PERBAIKAN
                 });
         }])
             ->having('total_results', '>', 0)

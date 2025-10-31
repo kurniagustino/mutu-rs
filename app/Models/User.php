@@ -5,9 +5,11 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+// 👈 1. UBAH/TAMBAHKAN INI (dari Departemen ke Ruangan)
+use Spatie\Permission\Traits\HasRoles; // 👈 2. TAMBAHKAN INI
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -45,49 +47,55 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    // ✅ Eager load departemens & roles
-    protected $with = ['departemens', 'roles'];
+    // ✅ Eager load ruangans & roles
+    protected $with = ['ruangans', 'roles']; // 👈 3. GANTI NAMA ('departemens' -> 'ruangans')
 
     /**
-     * ✅ MANY-TO-MANY: User bisa punya banyak departemen via pivot
+     * ✅ RELASI BARU: User bisa punya banyak ruangan via pivot
      */
-    public function departemens()
+    public function ruangans(): BelongsToMany
     {
         return $this->belongsToMany(
-            \App\Models\Departemen::class,
-            'mapping_pengguna_unit',  // Pivot table
+            Ruangan::class,            // 👈 4. GANTI MODEL ('Departemen::class' -> 'Ruangan::class')
+            'mapping_pengguna_unit',   // Pivot table
             'user_id',                 // FK di pivot untuk User
-            'id_ruang',                // FK di pivot untuk Departemen
-            'id',                      // PK di table users
-            'id_ruang'                 // PK di table departemen
+            'id_ruang'                 // FK di pivot untuk Ruangan
         )
-            ->withPivot('level')           // Include column 'level' dari pivot
-            ->withTimestamps();            // Include created_at & updated_at dari pivot
+            ->withPivot('level')       // Include column 'level' dari pivot
+            ->withTimestamps();        // Include created_at & updated_at dari pivot
     }
 
     /**
-     * ✅ ACCESSOR: Departemen utama (first departemen)
+     * ✅ ACCESSOR BARU: Ruangan utama (first ruangan)
+     * Menggantikan getDepartemenAttribute
      */
-    public function getDepartemenAttribute()
+    public function getRuanganUtamaAttribute()
     {
-        return $this->departemens->first();
+        // 👈 5. GANTI RELASI ('$this->departemens' -> '$this->ruangans')
+        return $this->ruangans->first();
     }
 
     /**
      * ✅ ACCESSOR: ID Ruang utama (untuk backward compatibility)
+     * TETAP DIPERTAHANKAN, HANYA GANTI LOGIKA
      */
     public function getIdRuangAttribute()
     {
-        return $this->departemens->first()?->id_ruang;
+        // 👈 6. GANTI RELASI ('$this->departemens' -> '$this->ruangans')
+        return $this->ruangans->first()?->id_ruang;
     }
 
     /**
      * ✅ ACCESSOR: Level utama (dari pivot)
+     * TETAP DIPERTAHANKAN, HANYA GANTI LOGIKA
      */
     public function getLevelAttribute()
     {
-        return $this->departemens->first()?->pivot->level;
+        // 👈 7. GANTI RELASI ('$this->departemens' -> '$this->ruangans')
+        return $this->ruangans->first()?->pivot->level;
     }
+
+    // --- SISA FUNGSI DI BAWAH INI TIDAK BERUBAH ---
 
     public function getFilamentName(): string
     {

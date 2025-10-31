@@ -13,11 +13,11 @@ class TopIndikatorChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $idRuang = $user->id_ruang;
+        $idUnit = $user->ruangan_utama->id_unit ?? null; // 👈 LOGIKA BARU
         $year = now()->year;
 
-        $indicators = HospitalSurveyIndicator::whereHas('departemens', function ($q) use ($idRuang) {
-            $q->where('id_ruang', $idRuang);
+        $indicators = HospitalSurveyIndicator::whereHas('units', function ($q) use ($idUnit) { // 👈 PERBAIKAN
+            $q->where('unit.id', $idUnit); // 👈 PERBAIKAN
         })
             ->withCount(['results' => function ($q) use ($year) {
                 $q->whereYear('result_post_date', $year);

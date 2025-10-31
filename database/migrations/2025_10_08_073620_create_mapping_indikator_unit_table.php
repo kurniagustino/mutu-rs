@@ -19,7 +19,6 @@ return new class extends Migration
             $table->timestamp('created')->nullable();
             $table->string('tahun', 4)->nullable();
             $table->string('statuspmkp', 50)->nullable();
-            $table->string('tambahan', 110)->nullable();
         });
     }
 

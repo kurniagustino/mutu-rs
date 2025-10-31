@@ -22,23 +22,31 @@ class UnitStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         $user = Auth::user();
-        $unitId = $user->id_ruang;
-        $unitName = $user->departemen->nama_ruang ?? 'Unit Anda';
+        $ruangan = $user->ruangan_utama; // 👈 AMBIL MODEL RUANGAN
+
+        // Jika user tidak punya ruangan, jangan tampilkan apa-apa
+        if (! $ruangan) {
+            return [];
+        }
+
+        $idRuang = $ruangan->id_ruang; // ID Ruangan (cth: 25)
+        $idUnit = $ruangan->id_unit;   // ID Unit (cth: 9)
+        $unitName = $ruangan->nama_ruang ?? 'Unit Anda'; // 👈 PERBAIKAN (Hantu #1)
 
         // Indikator unit ini
-        $unitIndicators = HospitalSurveyIndicator::whereHas('departemens', function ($query) use ($unitId) {
-            $query->where('id_ruang', $unitId);
+        $unitIndicators = HospitalSurveyIndicator::whereHas('units', function ($query) use ($idUnit) { // 👈 PERBAIKAN (Hantu #2)
+            $query->where('unit.id', $idUnit); // 👈 LOGIKA BARU (query ke tabel unit)
         })->count();
 
         // Indikator unit yang sudah diinput bulan ini
-        $unitCompletedThisMonth = HospitalSurveyIndicatorResult::where('result_department_id', $unitId)
+        $unitCompletedThisMonth = HospitalSurveyIndicatorResult::where('result_department_id', $idRuang)
             ->whereYear('result_period', Carbon::now()->year)
             ->whereMonth('result_period', Carbon::now()->month)
             ->distinct('result_indicator_id')
             ->count('result_indicator_id');
 
         // Total data entry unit (all time)
-        $totalUnitDataEntry = HospitalSurveyIndicatorResult::where('result_department_id', $unitId)->count();
+        $totalUnitDataEntry = HospitalSurveyIndicatorResult::where('result_department_id', $idRuang)->count();
 
         // Progress percentage
         $progressPercentage = $unitIndicators > 0

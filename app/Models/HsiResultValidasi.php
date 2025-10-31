@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// 👈 TAMBAHKAN INI
+
 class HsiResultValidasi extends Model
 {
     use HasFactory;
@@ -45,9 +47,14 @@ class HsiResultValidasi extends Model
     /**
      * Relasi ke Departemen
      */
-    public function department(): BelongsTo
+    /**
+     * Relasi ke Ruangan
+     */
+    public function ruangan(): BelongsTo // 👈 GANTI NAMA
     {
-        return $this->belongsTo(Departemen::class, 'result_department_id', 'id_ruang');
+        // 'result_department_id' adalah foreign key di tabel INI
+        // 'id_ruang' adalah primary key di tabel RUANGAN
+        return $this->belongsTo(Ruangan::class, 'result_department_id', 'id_ruang'); // 👈 GANTI MODEL
     }
 
     /**

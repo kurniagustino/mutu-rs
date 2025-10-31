@@ -17,7 +17,6 @@ return new class extends Migration
             $table->text('indicator_criteria_inclusive')->nullable();
             $table->text('indicator_criteria_exclusive')->nullable();
             $table->text('indicator_element')->nullable();
-            $table->text('indicator_element_2021')->nullable();
             $table->string('indicator_source_of_data', 100)->nullable();
             $table->string('indicator_type', 50)->nullable();
             $table->integer('indicator_value_standard')->nullable();
@@ -32,7 +31,6 @@ return new class extends Migration
             $table->char('indicator_record_status', 1)->nullable()->default('A');
             $table->char('status_kunci', 1)->nullable()->default('0');
             $table->char('tampil_survey', 1)->nullable()->default('0');
-            $table->enum('kategori', ['NASIONAL', 'RS', 'UNIT'])->nullable();
             $table->integer('urutan')->nullable();
             $table->enum('type_persen', ['PERSEN', 'Menit'])->nullable()->default('PERSEN');
             $table->enum('imut_must_valid', ['Y', 'N'])->nullable()->default('N');

@@ -11,7 +11,7 @@ class ImutCategoryForm
     {
         return $schema
             ->components([
-                TextInput::make('imut')
+                TextInput::make('imut_name_category')
                     ->label('Nama Kategori (Area)')
                     ->required()
                     ->unique(ignoreRecord: true)

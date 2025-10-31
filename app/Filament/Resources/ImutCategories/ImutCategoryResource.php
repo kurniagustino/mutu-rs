@@ -23,7 +23,7 @@ class ImutCategoryResource extends Resource
 
     protected static ?string $navigationLabel = 'Imut Categori Area';
 
-    protected static ?string $recordTitleAttribute = 'imut';
+    protected static ?string $recordTitleAttribute = 'imut_name_category';
 
     protected static string|UnitEnum|null $navigationGroup = 'Master Data';
 

@@ -31,7 +31,7 @@ class IndicatorsTable
                     ->color('info'),
 
                 // KOLOM BARU DARI RELASI
-                TextColumn::make('imutCategory.imut')
+                TextColumn::make('imutCategory.imut_name_category')
                     ->badge()
                     ->label('Kategori (Area)')
                     ->searchable(),

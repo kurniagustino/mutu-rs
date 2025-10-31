@@ -20,7 +20,7 @@ class WelcomeWidget extends Widget
 
         return [
             'name' => $user->name,
-            'unit' => $user->departemen->nama_ruang ?? 'N/A',
+            'unit' => $user->ruangan_utama->nama_ruang ?? 'N/A', // 👈 PERBAIKAN
             'role' => $user->roles->first()->name ?? 'User',
         ];
     }

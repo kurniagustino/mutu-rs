@@ -24,6 +24,6 @@ class ListImutCategories extends ListRecords
     protected function getTableQuery(): Builder
     {
         return static::getResource()::getEloquentQuery()
-            ->select(['imut_category_id', 'imut']); // ✅ Hanya select kolom yang dipakai
+            ->select(['imut_category_id', 'imut_name_category']); // ✅ Hanya select kolom yang dipakai
     }
 }

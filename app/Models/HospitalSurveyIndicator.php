@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// 👈 TAMBAHKAN INI
+
 class HospitalSurveyIndicator extends Model
 {
     use HasFactory;
@@ -42,7 +44,6 @@ class HospitalSurveyIndicator extends Model
         'status_imut_prioritas',
         'status_imut_skp',
         'status_imut_unit',
-        'status_imunas_2021',
         'tampil_survey',
         'kategori',
         'urutan',
@@ -63,9 +64,9 @@ class HospitalSurveyIndicator extends Model
      * ======================================
      * Ubah nama fungsi menjadi jamak (plural) -> departemens()
      */
-    public function departemens()
+    public function units() // 👈 GANTI NAMA (lebih baik jamak: units)
     {
-        return $this->belongsToMany(Departemen::class, 'mapping_indikator_unit', 'id_indikator', 'id_unit');
+        return $this->belongsToMany(Unit::class, 'mapping_indikator_unit', 'id_indikator', 'id_unit'); // 👈 GANTI MODEL
     }
 
     public function statuses()

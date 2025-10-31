@@ -10,7 +10,7 @@ class StatusKategoriSeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            ['nama_status' => 'Indikator Mutu Nasional 2021', 'warna_badge' => '#3b82f6'], // Blue
+            ['nama_status' => 'Indikator Mutu Nasional 2026', 'warna_badge' => '#3b82f6'], // Blue
             ['nama_status' => 'Indikator Mutu SKP', 'warna_badge' => '#3b82f6'], // Blue
             ['nama_status' => 'Indikator Mutu Nasional', 'warna_badge' => '#10b981'], // Green
             ['nama_status' => 'Indikator Mutu Prioritas', 'warna_badge' => '#f59e0b'], // Yellow

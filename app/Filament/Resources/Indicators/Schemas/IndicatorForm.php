@@ -22,7 +22,7 @@ class IndicatorForm
 
                 Select::make('indicator_category_id')
                     ->label('Kategori (Area)')
-                    ->relationship('imutCategory', 'imut')
+                    ->relationship('imutCategory', 'imut_name_category')
                     ->searchable()
                     ->preload()
                     ->required(),

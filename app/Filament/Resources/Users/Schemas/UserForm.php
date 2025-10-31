@@ -75,9 +75,9 @@ class UserForm
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                TextInput::make('fto')
-                    ->label('FTO')
-                    ->maxLength(50),
+                // TextInput::make('fto')
+                //     ->label('FTO')
+                //     ->maxLength(50),
 
                 Toggle::make('aktivasi')
                     ->label('Aktivasi Akun')
@@ -90,8 +90,8 @@ class UserForm
                     ->inline(false),
 
                 // ✅ Multi-select departemen (tidak diubah)
-                Select::make('departemens')
-                    ->relationship('departemens', 'nama_ruang')
+                Select::make('ruangans') // 👈 PERBAIKAN #1
+                    ->relationship('ruangans', 'nama_ruang') // 👈 PERBAIKAN #2
                     ->multiple()
                     ->searchable()
                     ->preload()

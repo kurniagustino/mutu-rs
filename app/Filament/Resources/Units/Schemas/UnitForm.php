@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Units\Schemas;
 
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput; // <-- KEMBALIKAN ALAMATNYA KE 'Forms'
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Schema; // <-- KEMBALIKAN ALAMATNYA KE 'Forms'
 
 class UnitForm
 {
@@ -11,18 +11,12 @@ class UnitForm
     {
         return $schema
             ->schema([
-                TextInput::make('nama_ruang')
-                    ->label('Nama Unit / Ruang')
+                TextInput::make('nama_unit') // 👈 GANTI DARI 'nama_ruang'
+                    ->label('Nama Unit')     // 👈 GANTI LABELNYA
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->columnSpanFull(),
 
-                TextInput::make('id_unit')
-                    ->label('ID Unit')
-                    ->disabledOn('edit') // <-- Akan nonaktif saat di halaman Edit
-                    ->hiddenOn('create') // <-- Akan tersembunyi saat di halaman Create
-                    ->required()
-                    ->numeric()
-                    ->unique(ignoreRecord: true),
             ]);
     }
 }

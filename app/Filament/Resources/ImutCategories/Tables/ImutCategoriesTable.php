@@ -16,7 +16,7 @@ class ImutCategoriesTable
         return $table
             ->striped()
             ->columns([
-                TextColumn::make('imut')
+                TextColumn::make('imut_name_category')
                     ->label('Nama Kategori (Area)')
                     ->searchable()
                     ->sortable()
@@ -43,7 +43,7 @@ class ImutCategoriesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('imut', 'asc') // ✅ Default sorting
+            ->defaultSort('imut_name_category', 'asc') // ✅ Default sorting
             ->persistSortInSession() // ✅ Cache sort preference
             ->persistSearchInSession() // ✅ Cache search preference
             ->defaultPaginationPageOption(25) // ✅ Optimize pagination

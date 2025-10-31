@@ -52,6 +52,11 @@
             z-index: 1;
         }
 
+        /* ✨ DARK MODE: Card background */
+        .dark .login-card {
+            background: #1f2937;
+        }
+
         /* Logo */
         .logo {
             width: 70px;
@@ -73,11 +78,21 @@
             line-height: 1.3;
         }
 
+        /* ✨ DARK MODE: Title color */
+        .dark h1 {
+            color: #f9fafb !important;
+        }
+
         .subtitle {
             font-size: 0.875rem;
             color: #6b7280;
             text-align: center;
             margin-bottom: 1.5rem;
+        }
+
+        /* ✨ DARK MODE: Subtitle color */
+        .dark .subtitle {
+            color: #9ca3af !important;
         }
 
         /* Form Spacing */
@@ -94,7 +109,12 @@
             font-size: 0.875rem !important;
         }
 
-        /* Input - White Background Always */
+        /* ✨ DARK MODE: Label color */
+        .dark label {
+            color: #e5e7eb !important;
+        }
+
+        /* Input - White Background in Light Mode */
         input[type="text"],
         input[type="email"],
         input[type="password"] {
@@ -105,7 +125,16 @@
             font-size: 0.95rem !important;
             color: #111827 !important;
             background: #ffffff !important;
-            transition: border-color 0.2s !important;
+            transition: border-color 0.2s, background-color 0.2s, color 0.2s !important;
+        }
+
+        /* ✨ DARK MODE: Input styling */
+        .dark input[type="text"],
+        .dark input[type="email"],
+        .dark input[type="password"] {
+            background: #374151 !important;
+            border-color: #4b5563 !important;
+            color: #f9fafb !important;
         }
 
         input:focus {
@@ -115,7 +144,14 @@
             background: #ffffff !important;
         }
 
-        /* Error State - White Background */
+        /* ✨ DARK MODE: Input focus */
+        .dark input:focus {
+            background: #4b5563 !important;
+            border-color: #818cf8 !important;
+            color: #f9fafb !important;
+        }
+
+        /* Error State */
         input[aria-invalid="true"],
         .fi-input-wrp-error input {
             border-color: #ef4444 !important;
@@ -123,8 +159,21 @@
             color: #111827 !important;
         }
 
+        /* ✨ DARK MODE: Error state */
+        .dark input[aria-invalid="true"],
+        .dark .fi-input-wrp-error input {
+            border-color: #f87171 !important;
+            background: #374151 !important;
+            color: #f9fafb !important;
+        }
+
         input::placeholder {
             color: #9ca3af !important;
+        }
+
+        /* ✨ DARK MODE: Placeholder */
+        .dark input::placeholder {
+            color: #6b7280 !important;
         }
 
         /* Error Message */
@@ -132,6 +181,11 @@
             color: #ef4444 !important;
             font-size: 0.8rem !important;
             margin-top: 0.25rem !important;
+        }
+
+        /* ✨ DARK MODE: Error message */
+        .dark .fi-fo-field-wrp-error-message {
+            color: #fca5a5 !important;
         }
 
         /* Button */
@@ -201,6 +255,11 @@
             border-top: 1px solid #e5e7eb;
         }
 
+        /* ✨ DARK MODE: Footer border */
+        .dark .footer {
+            border-top-color: #4b5563 !important;
+        }
+
         .footer-text {
             font-size: 0.8rem;
             font-weight: 600;
@@ -208,9 +267,19 @@
             margin-bottom: 0.2rem;
         }
 
+        /* ✨ DARK MODE: Footer text */
+        .dark .footer-text {
+            color: #d1d5db !important;
+        }
+
         .footer-copy {
             font-size: 0.7rem;
             color: #94a3b8;
+        }
+
+        /* ✨ DARK MODE: Footer copy */
+        .dark .footer-copy {
+            color: #9ca3af !important;
         }
 
         /* Responsive */
