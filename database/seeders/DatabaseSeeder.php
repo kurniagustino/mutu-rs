@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             ImutCategorySeeder::class,
             UnitSeeder::class,    // WAJIB PERTAMA
             RuanganSeeder::class, // WAJIB KEDUA
+            IndicatorSeeder::class,
+            IndicatorVariableSeeder::class,
         ]);
     }
 }

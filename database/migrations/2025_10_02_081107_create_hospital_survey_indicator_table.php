@@ -13,28 +13,39 @@ return new class extends Migration
     {
         Schema::create('hospital_survey_indicator', function (Blueprint $table) {
             $table->increments('indicator_id');
+            $table->string('indicator_name', 255)->nullable();
+
+            // --- 3 FIELD BARU DARI PDF (SESUAI OBROLAN) ---
+            $table->string('dimensi_mutu', 255)->nullable();
+            $table->text('tujuan')->nullable();
+            $table->string('satuan_pengukuran', 50)->nullable(); // Pengganti type_persen
+
+            // --- PROFIL INDIKATOR LAINNYA ---
             $table->text('indicator_definition')->nullable();
             $table->text('indicator_criteria_inclusive')->nullable();
             $table->text('indicator_criteria_exclusive')->nullable();
-            $table->text('indicator_element')->nullable();
-            $table->string('indicator_source_of_data', 100)->nullable();
-            $table->string('indicator_type', 50)->nullable();
-            $table->integer('indicator_value_standard')->nullable();
-            $table->string('indicator_monitoring_area', 200)->nullable();
+            $table->string('indicator_source_of_data', 255)->nullable();
 
-            // --- INI PERBAIKAN UTAMANYA ---
-            $table->string('indicator_frequency', 50)->nullable(); // Diperbesar dari char(1) jadi string(50)
-
-            $table->string('indicator_target', 5)->nullable()->default('0');
-            $table->integer('indicator_category_id')->nullable()->default(2);
-            $table->integer('indicator_iscomplete')->nullable()->default(0);
-            $table->char('indicator_record_status', 1)->nullable()->default('A');
-            $table->char('status_kunci', 1)->nullable()->default('0');
-            $table->char('tampil_survey', 1)->nullable()->default('0');
+            // --- PENGATURAN INDIKATOR ---
+            $table->string('indicator_type', 50)->nullable(); // (Proses, Outcome)
+            $table->string('indicator_monitoring_area', 200)->nullable(); // (Unit)
+            $table->string('indicator_frequency', 50)->nullable(); // (Bulanan)
+            $table->string('indicator_target', 10)->nullable()->default('0');
             $table->integer('urutan')->nullable();
-            $table->enum('type_persen', ['PERSEN', 'Menit'])->nullable()->default('PERSEN');
-            $table->enum('imut_must_valid', ['Y', 'N'])->nullable()->default('N');
+
+            // --- RELASI (SESUAI OBROLAN) ---
+            $table->integer('indicator_category_id')->nullable();
+            $table->unsignedInteger('penanggung_jawab_id')->nullable(); // Opsional, relasi ke user
+
+            // --- FIELD YANG ANDA MINTA TETAP ADA ---
+            $table->char('indicator_record_status', 1)->nullable()->default('A');
+
             $table->text('files')->nullable();
+            $table->timestamps(); // Standar Laravel
+
+            // --- FIELD YANG DIHAPUS ---
+            // indicator_element, indicator_value_standard, indicator_iscomplete
+            // status_kunci, tampil_survey, type_persen, imut_must_valid
         });
     }
 
