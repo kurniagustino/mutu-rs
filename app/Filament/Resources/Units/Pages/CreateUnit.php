@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\Units\Pages;
 
 use App\Filament\Resources\Units\UnitResource;
-use App\Models\Departemen;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateUnit extends CreateRecord
@@ -26,10 +24,7 @@ class CreateUnit extends CreateRecord
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $nextIdUnit = Departemen::max('id_unit') + 1;
-        
-        $data['id_unit'] = $nextIdUnit;
-
+        // Jika id_unit auto increment, tidak perlu set manual
         return $data;
     }
 }

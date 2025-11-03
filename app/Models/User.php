@@ -56,13 +56,26 @@ class User extends Authenticatable implements FilamentUser
     public function ruangans(): BelongsToMany
     {
         return $this->belongsToMany(
-            Ruangan::class,            // 👈 4. GANTI MODEL ('Departemen::class' -> 'Ruangan::class')
-            'mapping_pengguna_unit',   // Pivot table
-            'user_id',                 // FK di pivot untuk User
-            'id_ruang'                 // FK di pivot untuk Ruangan
+            Ruangan::class,
+            'mapping_pengguna_unit',
+            'user_id',
+            'id_ruang'
         )
-            ->withPivot('level')       // Include column 'level' dari pivot
-            ->withTimestamps();        // Include created_at & updated_at dari pivot
+            ->withPivot('level')
+            ->withTimestamps()
+            ->using(MappingPenggunaUnit::class);
+    }
+
+    public function units()
+    {
+        return $this->hasManyThrough(
+            Unit::class,
+            Ruangan::class,
+            'id_ruang',  // Foreign key on ruangan table
+            'id',        // Foreign key on unit table
+            'id',        // Local key on users table
+            'id_unit'    // Local key on ruangan table
+        );
     }
 
     /**

@@ -24,10 +24,10 @@ class RuanganRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                // Form untuk 'Create' atau 'Edit' ruangan dari sini
                 TextInput::make('nama_ruang')
                     ->required()
                     ->maxLength(255)
+                    ->default(fn () => $this->getOwnerRecord()->nama_unit)
                     ->columnSpanFull(),
                 TextInput::make('sink')
                     ->maxLength(50),

@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Schema::defaultStringLength(191); // <-- ADD THIS LINE
+        Schema::defaultStringLength(191);
+        
+        // Register observers
+        \App\Models\Unit::observe(\App\Observers\UnitObserver::class);
+        \App\Models\Ruangan::observe(\App\Observers\RuanganObserver::class);
     }
 }

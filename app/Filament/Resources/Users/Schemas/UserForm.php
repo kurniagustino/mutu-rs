@@ -90,14 +90,24 @@ class UserForm
                     ->inline(false),
 
                 // ✅ Multi-select departemen (tidak diubah)
-                Select::make('ruangans') // 👈 PERBAIKAN #1
-                    ->relationship('ruangans', 'nama_ruang') // 👈 PERBAIKAN #2
+                Select::make('ruangans')
+                    ->relationship(
+                        'ruangans',
+                        'nama_ruang',
+                        fn ($query) => $query->join('unit', 'ruangan.id_unit', '=', 'unit.id')
+                            ->select('ruangan.*', 'unit.nama_unit')
+                    )
                     ->multiple()
-                    ->searchable()
                     ->preload()
+                    ->searchable()
                     ->required()
-                    ->label('Departemen / Unit')
-                    ->helperText('Pilih satu atau lebih departemen')
+                    ->label('Unit / Ruangan')
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        $ruangan = \App\Models\Ruangan::with('unit')->find($value);
+
+                        return $ruangan ? "{$ruangan->unit->nama_unit} - {$ruangan->nama_ruang}" : null;
+                    })
+                    ->helperText('Pilih ruangan yang diinginkan')
                     ->columnSpanFull(),
 
                 // ✅ Roles (tidak diubah)
