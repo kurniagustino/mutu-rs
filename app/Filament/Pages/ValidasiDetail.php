@@ -6,6 +6,7 @@ use App\Models\HospitalSurveyIndicator;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\DB;
 
 class ValidasiDetail extends Page
 {
@@ -30,7 +31,6 @@ class ValidasiDetail extends Page
         $this->indicator = request()->query('indicator');
         $this->year = request()->query('year', date('Y'));
         $this->month = request()->query('month', date('m'));
-
         $this->loadDetailData();
     }
 
@@ -41,8 +41,7 @@ class ValidasiDetail extends Page
             'results' => function ($q) {
                 $q->whereYear('result_period', $this->year)
                     ->whereMonth('result_period', $this->month)
-                    ->where('result_record_status', 'A')
-                    ->with('department');
+                    ->where('result_record_status', 'A');
             },
         ])->find($this->indicator);
 
@@ -52,15 +51,25 @@ class ValidasiDetail extends Page
             return;
         }
 
-        $groupedResults = $indicator->results->groupBy('result_department_id')->map(function ($group) {
-            $department = $group->first()->department;
+        // Group results by result_department_id, fetch ruangan & unit info
+        $groupedResults = $indicator->results->groupBy('result_department_id')->map(function ($group, $ruangId) {
+            // Ambil data ruangan dari tabel ruangan
+            $ruangan = DB::table('ruangan')->where('id_ruang', $ruangId)->first();
+            // Ambil nama unit dari tabel unit (jika ada)
+            $unitName = null;
+            if ($ruangan && $ruangan->id_unit) {
+                $unit = DB::table('unit')->where('id', $ruangan->id_unit)->first();
+                $unitName = $unit->nama_unit ?? null;
+            }
+
             $numerator = $group->sum(fn ($r) => (int) $r->result_numerator_value);
             $denominator = $group->sum(fn ($r) => (int) $r->result_denumerator_value);
             $persentase = $denominator > 0 ? round(($numerator / $denominator) * 100, 2) : 0;
 
             return [
-                'unit_name' => $department->nama_ruang ?? 'Unit Tidak Diketahui',
-                'area_monitor' => $department->sink ?? '-',
+                'unit_name' => $unitName ?? 'Unit Tidak Diketahui',
+                'ruangan_name' => $ruangan->nama_ruang ?? '-', // Optional: tampilkan juga nama ruangan
+                'area_monitor' => $ruangan->sink ?? '-',
                 'numerator' => $numerator,
                 'denominator' => $denominator,
                 'persentase' => $persentase,

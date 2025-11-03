@@ -2,108 +2,131 @@
 
 namespace App\Filament\Resources\Indicators\Schemas;
 
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+// <-- ✅ TAMBAHKAN BARIS INI
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema; // ✅ INI SUDAH BENAR (v4)
 
 class IndicatorForm
 {
-    public static function configure(Schema $schema): Schema
+    public static function configure(Schema $schema): Schema // ✅ INI SUDAH BENAR (v4)
     {
         return $schema
             ->components([
-                Textarea::make('indicator_element')
-                    ->label('Nama Indikator')
-                    ->required()
-                    ->columnSpanFull(),
-
-                Select::make('indicator_category_id')
-                    ->label('Kategori (Area)')
-                    ->relationship('imutCategory', 'imut_name_category')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-
-                // ✅ FIELD JENIS IMUT PAKAI TEXT INPUT (BEBAS ISI APA SAJA)
-                TextInput::make('indicator_imut_type')
-                    ->label('Jenis IMUT')
-                    ->placeholder('cth: INM, IKP, IAP, IMK')
-                    ->maxLength(20),
-
-                // ✅ FIELD KATEGORI INDIKATOR (CHECKBOX MULTIPLE)
-                CheckboxList::make('statuses')
-                    ->label('🏷️ Kategori Indikator')
-                    ->relationship('statuses', 'nama_status')
+                Section::make('Informasi Utama Indikator') // <-- Ini yang error
                     ->columns(2)
-                    ->gridDirection('row')
-                    ->bulkToggleable()
-                    ->helperText('Pilih satu atau lebih kategori untuk indikator ini')
-                    ->columnSpanFull(),
+                    ->components([
+                        // ✅ PERBAIKAN: Dari 'indicator_element' ke 'indicator_name'
+                        Textarea::make('indicator_name')
+                            ->label('Nama Indikator')
+                            ->required()
+                            ->columnSpanFull(),
 
-                TextInput::make('indicator_type')
-                    ->label('Tipe Indikator (cth: Struktur, Proses, Outcome)')
-                    ->required(),
+                        // ✅ BARU: Tambahan dari PDF
+                        Textarea::make('tujuan')
+                            ->label('Tujuan')
+                            ->rows(3)
+                            ->columnSpanFull(),
 
-                // ✅ FIELD AREA MONITOR (BARU DITAMBAHKAN)
-                TextInput::make('indicator_monitoring_area')
-                    ->label('Area Monitor')
-                    ->placeholder('cth: Rawat Inap, IGD, Poliklinik, Laboratorium')
-                    ->maxLength(200),
+                        // ✅ BARU: Tambahan dari PDF
+                        TextInput::make('dimensi_mutu')
+                            ->label('Dimensi Mutu')
+                            ->placeholder('cth: Keselamatan, Tepat Waktu, Efektif'),
 
-                TextInput::make('indicator_target')
-                    ->label('Target')
-                    ->numeric()
-                    ->suffix('%')
-                    ->required()
-                    ->default(0),
+                        // ✅ BARU: Pengganti 'type_persen'
+                        TextInput::make('satuan_pengukuran')
+                            ->label('Satuan Pengukuran')
+                            ->placeholder('cth: Persentase, Menit, Indeks, Per mil'),
+                    ]),
 
-                // ✅ FIELD BARU 1: SUMBER DATA
-                TextInput::make('indicator_source_of_data')
-                    ->label('Sumber Data')
-                    ->placeholder('cth: Rekam Medis, Survey, Observasi')
-                    ->maxLength(100),
+                Section::make('Profil & Pengaturan')
+                    ->columns(2)
+                    ->components([
+                        Select::make('indicator_category_id')
+                            ->label('Kategori (Area)')
+                            ->relationship('imutCategory', 'imut_name_category')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
 
-                Textarea::make('indicator_definition')
-                    ->label('Definisi Operasional')
-                    ->rows(5)
-                    ->columnSpanFull(),
+                        TextInput::make('indicator_type')
+                            ->label('Tipe Indikator')
+                            ->placeholder('cth: Struktur, Proses, Outcome')
+                            ->required(),
 
-                // ✅ FIELD BARU 2: KRITERIA INKLUSIF
-                Textarea::make('indicator_criteria_inclusive')
-                    ->label('Kriteria Inklusif')
-                    ->placeholder('Kriteria yang HARUS dipenuhi untuk masuk dalam pengukuran...')
-                    ->rows(4)
-                    ->columnSpanFull(),
+                        TextInput::make('indicator_monitoring_area')
+                            ->label('Area Monitor (Unit)')
+                            ->placeholder('cth: Rawat Inap, IGD, Poliklinik')
+                            ->maxLength(200)
+                            ->columnSpanFull(),
 
-                // ✅ FIELD BARU 3: KRITERIA EKSKLUSIF
-                Textarea::make('indicator_criteria_exclusive')
-                    ->label('Kriteria Eksklusif')
-                    ->placeholder('Kriteria yang TIDAK boleh ada untuk masuk dalam pengukuran...')
-                    ->rows(4)
-                    ->columnSpanFull(),
+                        TextInput::make('indicator_target')
+                            ->label('Target')
+                            ->maxLength(10)
+                            ->placeholder('cth: 100, 80, <5, >76.61')
+                            ->required()
+                            ->default(0),
 
-                // ✅ FIELD UPLOAD FILE MANUAL FORM
-                FileUpload::make('files')
-                    ->label('📎 Upload Manual Form')
-                    ->disk('public') // Atau disk yang Anda gunakan
-                    ->directory('indicator-manuals') // Folder penyimpanan
-                    ->acceptedFileTypes([
-                        'application/pdf', // PDF
-                        'application/vnd.ms-excel', // Excel (.xls)
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Excel (.xlsx)
-                        'application/msword', // Word (.doc)
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // Word (.docx)
-                    ])
-                    ->maxSize(10240) // Max 10MB
-                    ->downloadable() // Bisa didownload
-                    ->openable() // Bisa dibuka di tab baru
-                    ->previewable(false) // Tidak preview (karena bukan gambar)
-                    ->helperText('Format: PDF, Excel (.xls, .xlsx), Word (.doc, .docx) - Maksimal 10MB')
-                    ->columnSpanFull(),
+                        TextInput::make('indicator_source_of_data')
+                            ->label('Sumber Data')
+                            ->placeholder('cth: Rekam Medis, Survey, Observasi')
+                            ->maxLength(255), // Sesuai migrasi baru
 
+                        // ✅ BARU: Tambahan opsional (Relasi ke User)
+                        Select::make('penanggung_jawab_id')
+                            ->label('Penanggung Jawab (PIC)')
+                            ->relationship('user', 'name') // Asumsi relasi 'user' di model
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Pilih PIC (Opsional)'),
+                    ]),
+
+                Section::make('Detail Kamus Indikator')
+                    ->columns(1)
+                    ->collapsible() // Boleh diciutkan
+                    ->components([
+                        Textarea::make('indicator_definition')
+                            ->label('Definisi Operasional')
+                            ->rows(5)
+                            ->columnSpanFull(),
+
+                        Textarea::make('indicator_criteria_inclusive')
+                            ->label('Kriteria Inklusif')
+                            ->placeholder('Kriteria yang HARUS dipenuhi...')
+                            ->rows(4)
+                            ->columnSpanFull(),
+
+                        Textarea::make('indicator_criteria_exclusive')
+                            ->label('Kriteria Eksklusif')
+                            ->placeholder('Kriteria yang TIDAK boleh ada...')
+                            ->rows(4)
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Lampiran')
+                    ->columns(1)
+                    ->components([
+                        FileUpload::make('files')
+                            ->label('📎 Upload Manual Form / Lampiran')
+                            ->disk('public')
+                            ->directory('indicator-manuals')
+                            ->acceptedFileTypes([
+                                'application/pdf',
+                                'application/vnd.ms-excel',
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'application/msword',
+                                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            ])
+                            ->maxSize(10240) // 10MB
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(false)
+                            ->helperText('Format: PDF, Excel, Word - Maksimal 10MB')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 }

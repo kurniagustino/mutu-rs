@@ -32,25 +32,20 @@ class UsersTable
                     ->searchable(),
 
                 // ✅ UPDATED: Display multiple departemens (tidak diubah)
-                TextColumn::make('ruangans.nama_ruang') // 👈 PERBAIKAN #1
+                TextColumn::make('departemen')
                     ->label('Departemen')
                     ->badge()
-                    ->separator(',')
                     ->color('info')
-                    ->wrap(),
-
-                // ✅ NEW: Display level dari pivot table (tidak diubah)
-                TextColumn::make('ruangans') // 👈 PERBAIKAN #2
-                    ->label('Level')
-                    ->formatStateUsing(function ($record) {
-                        return $record->ruangans // 👈 PERBAIKAN #3
-                            ->pluck('pivot.level')
-                            ->filter()
-                            ->map(fn ($level) => ucfirst($level))
-                            ->join(', ');
+                    ->state(function ($record) {
+                        $departments = $record->ruangans->pluck('nama_ruang')->unique()->values();
+                        if ($departments->count() > 1) {
+                            return $departments->first() . ' (+' . ($departments->count() - 1) . ')';
+                        }
+                        return $departments->first() ?? '-';
                     })
-                    ->badge()
-                    ->color('success'),
+                    ->tooltip(function ($record) {
+                        return $record->ruangans->pluck('nama_ruang')->unique()->join("\n");
+                    }),
 
                 // ✅ 100% DYNAMIC - auto-format semua roles (tidak diubah)
                 TextColumn::make('roles.name')

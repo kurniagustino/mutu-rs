@@ -15,21 +15,44 @@ class TrendCapaianMutuChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $idUnit = $user->ruangan_utama->id_unit ?? null; // 👈 LOGIKA BARU
-        $year = now()->year;
+        $idUnit = $user->ruangan_utama->id_unit ?? null;
+        
+        // Handle filter
+        $year = match($this->filter) {
+            'last_year' => now()->subYear()->year,
+            default => now()->year,
+        };
+
+        if (!$idUnit) {
+            return [
+                'datasets' => [[
+                    'label' => 'Total Pendataan',
+                    'data' => [],
+                    'borderColor' => '#10b981',
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
+                    'fill' => true,
+                    'tension' => 0.4,
+                ]],
+                'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+            ];
+        }
 
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         $data = [];
 
         for ($month = 1; $month <= 12; $month++) {
-            $count = HospitalSurveyIndicatorResult::whereYear('result_post_date', $year)
-                ->whereMonth('result_post_date', $month)
-                ->whereHas('indicator.units', function ($q) use ($idUnit) { // 👈 PERBAIKAN
-                    $q->where('unit.id', $idUnit); // 👈 PERBAIKAN
-                })
-                ->count();
+            try {
+                $count = HospitalSurveyIndicatorResult::whereYear('result_post_date', $year)
+                    ->whereMonth('result_post_date', $month)
+                    ->whereHas('indicator.units', function ($q) use ($idUnit) {
+                        $q->where('unit.id', $idUnit);
+                    })
+                    ->count();
 
-            $data[] = $count;
+                $data[] = $count;
+            } catch (\Exception $e) {
+                $data[] = 0;
+            }
         }
 
         return [
@@ -62,6 +85,8 @@ class TrendCapaianMutuChart extends ChartWidget
 
     public function getDescription(): ?string
     {
-        return 'Deskripsi chart';
+        return 'Grafik trend pendataan indikator mutu per bulan';
     }
+
+    protected int|string|array $columnSpan = 'full';
 }

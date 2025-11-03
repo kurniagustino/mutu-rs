@@ -7,7 +7,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter; // ✅ Ganti Filter
 use Filament\Tables\Table;
 
 class IndicatorsTable
@@ -16,21 +16,34 @@ class IndicatorsTable
     {
         return $table
             ->columns([
-                TextColumn::make('indicator_element')
+                TextColumn::make('imutCategory.imut_name_category')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Wajib' => 'success',
+                        default => 'gray',
+                    }),
+
+                TextColumn::make('indicator_name')
                     ->label('Nama Indikator')
                     ->searchable()
-                    ->limit(50)
-                    ->wrap(),
+                    ->limit(70)
+                    ->wrap()
+                    ->weight('medium'),
 
-                // ✅ KOLOM JENIS IMUT DENGAN TEXT INPUT (BEBAS)
-                TextColumn::make('indicator_imut_type')
-                    ->label('Jenis IMUT')
+                // ✅ BARU: Menampilkan dimensi mutu
+                TextColumn::make('dimensi_mutu')
+                    ->label('Dimensi Mutu')
                     ->searchable()
-                    ->sortable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(true), // Sembunyikan by default
+
+                // ✅ BARU: Menampilkan satuan
+                TextColumn::make('satuan_pengukuran')
+                    ->label('Satuan')
                     ->badge()
                     ->color('info'),
 
-                // KOLOM BARU DARI RELASI
                 TextColumn::make('imutCategory.imut_name_category')
                     ->badge()
                     ->label('Kategori (Area)')
@@ -38,17 +51,21 @@ class IndicatorsTable
 
                 TextColumn::make('indicator_type')
                     ->label('Tipe')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault(true), // Sembunyikan by default
 
                 TextColumn::make('indicator_target')
                     ->label('Target')
-                    ->suffix('%'),
+                    ->badge(),
             ])
             ->filters([
-                // ✅ PAKAI Filter LANGSUNG (BUKAN Tables\Filters\Filter)
-                Filter::make('indicator_imut_type')
-                    ->label('Jenis IMUT')
-                    ->query(fn ($query) => $query->whereNotNull('indicator_imut_type')),
+                // ✅ PERBAIKAN: Filter berdasarkan Kategori Area
+                SelectFilter::make('indicator_category_id')
+                    ->label('Kategori (Area)')
+                    ->relationship('imutCategory', 'imut_name_category')
+                    ->searchable()
+                    ->preload(),
             ])
             ->recordActions([
                 EditAction::make(),

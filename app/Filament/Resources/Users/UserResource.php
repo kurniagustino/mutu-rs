@@ -50,4 +50,13 @@ class UserResource extends Resource
             'edit' => EditUser::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes()
+            ->leftJoin('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->select('users.*')
+            ->orderByRaw('CASE WHEN model_has_roles.role_id IS NOT NULL THEN 1 ELSE 2 END');
+    }
 }

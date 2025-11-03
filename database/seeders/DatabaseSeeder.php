@@ -17,13 +17,16 @@ class DatabaseSeeder extends Seeder
     {
 
         $this->call([
-            UserSeeder::class,
+            // UserSeeder::class,
+            MigrateOldUserSeeder::class, // ✅ PANGGIL seeder migrasi baru
             StatusKategoriSeeder::class,
             ImutCategorySeeder::class,
             UnitSeeder::class,    // WAJIB PERTAMA
             RuanganSeeder::class, // WAJIB KEDUA
             IndicatorSeeder::class,
             IndicatorVariableSeeder::class,
+            MappingIndikatorUnitSeeder::class,
+            MappingPenggunaUnitSeeder::class,
         ]);
     }
 }

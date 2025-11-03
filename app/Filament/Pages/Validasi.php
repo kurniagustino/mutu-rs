@@ -57,7 +57,6 @@ class Validasi extends Page implements HasForms
     public function mount(): void
     {
         $this->selectedYear = date('Y');
-
         $this->selectedMonth = date('m');
 
         $this->filterData = [
@@ -74,7 +73,9 @@ class Validasi extends Page implements HasForms
         return [
             Select::make('category_id')
                 ->label('Kategori Area')
-                ->options(ImutCategory::pluck('imut', 'imut_category_id'))
+                // FIX: Replace 'imut' with the correct category name column in ImutCategory::pluck
+                // GANTI DENGAN KOLOM NAMA YANG BENAR, misal: 'imut_name_category'
+                ->options(ImutCategory::pluck('imut_name_category', 'imut_category_id'))
                 ->searchable()
                 ->placeholder('Pilih Kategori Area')
                 ->reactive()
@@ -149,10 +150,11 @@ class Validasi extends Page implements HasForms
                 ->where('periodevalidasi', $periode)
                 ->first();
 
+            // CATATAN: GUNAKAN KOLOM NAMA YANG BENAR DI imutCategory, misal: 'imut_name_category'
             return [
                 'indicator_id' => $indicator->indicator_id,
                 'indicator_name' => $indicator->indicator_definition,
-                'category_name' => $indicator->imutCategory->imut ?? '-',
+                'category_name' => $indicator->imutCategory->imut_name_category ?? '-', // <-- KOLOM SESUAI TABEL
                 'numerator' => $numerator,
                 'numerator_description' => $indicator->indicator_numerator_description,
                 'denominator' => $denominator,

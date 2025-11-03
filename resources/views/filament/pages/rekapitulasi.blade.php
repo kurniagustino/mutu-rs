@@ -66,13 +66,13 @@
                                     </td>
                                     <td class="px-3 py-4">
                                         <x-filament::badge color="info">
-                                            {{ $indicator->departemens->first()->nama_ruang ?? 'N/A' }}
+                                            {{ $indicator->units->first()->nama_unit ?? 'N/A' }}
                                         </x-filament::badge>
                                     </td>
                                     <td class="px-3 py-4">
                                         <div class="space-y-1">
                                             <div class="text-sm font-medium text-gray-950 dark:text-white">
-                                                {{ $indicator->indicator_title }}
+                                                {{ $indicator->indicator_name }}
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 Tipe: {{ $indicator->indicator_type ?? 'N/A' }}

@@ -35,14 +35,14 @@ class GrafikMutu extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            TrendCapaianMutuChart::class,
+            TrendCapaianMutuChart::class, // Full width
             TopIndikatorChart::class,
             DistribusiKategoriChart::class,
             StatusCapaianChart::class,
         ];
     }
 
-    // ✅ LAYOUT 2 KOLOM
+    // ✅ LAYOUT RESPONSIF - Trend full width, lainnya 2 kolom
     public function getHeaderWidgetsColumns(): int|array
     {
         return 2;

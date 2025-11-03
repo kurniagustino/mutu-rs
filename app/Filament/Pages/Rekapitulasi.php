@@ -39,7 +39,14 @@ class Rekapitulasi extends Page
     public function getSubheading(): ?string
     {
         $user = Auth::user();
-        $unitName = $user->departemen->nama_ruang ?? 'Tidak ada unit';
+
+        // ✅ PERBAIKAN: Gunakan ruangans
+        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+            return 'Unit Anda: Tidak ada unit';
+        }
+
+        $ruangan = $user->ruangans->first();
+        $unitName = $ruangan->nama_ruang ?? 'Tidak ada unit';
 
         return "Unit Anda: {$unitName}";
     }
@@ -50,13 +57,18 @@ class Rekapitulasi extends Page
     public function getIndicatorsByDate()
     {
         $user = Auth::user();
-        $idRuang = $user->id_ruang;
 
-        // ✅ PAKAI result_post_date dan result_indicator_id
+        // ✅ PERBAIKAN: Ambil ID ruangan dari user
+        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+            return collect();
+        }
+
+        $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
+
+        // ✅ PERBAIKAN: Filter berdasarkan result_department_id (ruangan)
         $indicators = HospitalSurveyIndicatorResult::query()
-            ->whereHas('indicator.departemens', function ($query) use ($idRuang) {
-                $query->where('id_ruang', $idRuang);
-            })
+            ->whereIn('result_department_id', $ruanganIds)
+            ->where('result_record_status', 'A')
             ->selectRaw('DATE(result_post_date) as date, COUNT(DISTINCT result_indicator_id) as count')
             ->groupBy('date')
             ->orderBy('date', 'DESC')
@@ -72,13 +84,20 @@ class Rekapitulasi extends Page
     public function getAllIndicators()
     {
         $user = Auth::user();
-        $idRuang = $user->id_ruang;
 
+        // ✅ PERBAIKAN: Ambil ID unit dari ruangan user
+        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+            return collect();
+        }
+
+        $userUnitIds = $user->ruangans->pluck('id_unit')->unique()->toArray();
+
+        // ✅ PERBAIKAN: Gunakan relasi units, bukan departemens
         $indicators = HospitalSurveyIndicator::query()
-            ->whereHas('departemens', function ($query) use ($idRuang) {
-                $query->where('id_ruang', $idRuang);
+            ->whereHas('units', function ($query) use ($userUnitIds) {
+                $query->whereIn('unit.id', $userUnitIds);
             })
-            ->with(['imutCategory', 'departemens'])
+            ->with(['imutCategory', 'units'])
             ->orderBy('indicator_id', 'DESC')
             ->get();
 

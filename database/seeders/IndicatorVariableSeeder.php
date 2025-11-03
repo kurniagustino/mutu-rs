@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\HospitalSurveyIndicator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema; // Kita butuh model ini
+use Illuminate\Support\Facades\Schema;
 
 class IndicatorVariableSeeder extends Seeder
 {
@@ -14,14 +14,9 @@ class IndicatorVariableSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Kosongkan tabel (opsional tapi disarankan)
         Schema::disableForeignKeyConstraints();
         DB::table('hospital_survey_indicator_variable')->truncate();
         Schema::enableForeignKeyConstraints();
-
-        // 2. Ambil semua indikator yang sudah ada di database
-        // Kita ambil 'indicator_id' berdasarkan 'indicator_name'
-        $allIndicators = HospitalSurveyIndicator::pluck('indicator_id', 'indicator_name');
 
         // 3. Peta data Numerator/Denominator dari PDF
         // Kunci array HARUS SAMA PERSIS dengan 'indicator_name' di seeder sebelumnya
@@ -93,34 +88,44 @@ class IndicatorVariableSeeder extends Seeder
             // ... Tambahkan indikator lain di sini jika perlu
         ];
 
+        // --- INI DIA PERBAIKANNYA ---
+
+        // 1. Ambil SEMUA indikator (bukan di-pluck)
+        $allIndicators = HospitalSurveyIndicator::select('indicator_id', 'indicator_name')->get();
+
         $variablesToInsert = [];
-        $now = now();
 
-        // 4. Looping Peta data dan siapkan data untuk di-insert
-        foreach ($variableMap as $indicatorName => $vars) {
-            // Cek apakah indikator dengan nama ini ada di database
-            if (isset($allIndicators[$indicatorName])) {
-                $indicatorId = $allIndicators[$indicatorName];
+        // 2. Looping hasil query, BUKAN looping $variableMap
+        foreach ($allIndicators as $indicator) {
 
-                // Tambahkan data Numerator
+            // 3. Cek apakah nama indikator ini ada di dalam $variableMap
+            if (isset($variableMap[$indicator->indicator_name])) {
+
+                // 4. Jika ada, ambil data N/D-nya
+                $vars = $variableMap[$indicator->indicator_name];
+
+                // Tambahkan data Numerator untuk ID indikator ini
                 $variablesToInsert[] = [
-                    'variable_indicator_id' => $indicatorId,
+                    'variable_indicator_id' => $indicator->indicator_id, // Gunakan ID yang sedang dilooping
                     'variable_name' => $vars['N'],
                     'variable_type' => 'N',
                     'variable_description' => 'Numerator (Pembilang)',
                 ];
 
-                // Tambahkan data Denominator
+                // Tambahkan data Denominator untuk ID indikator ini
                 $variablesToInsert[] = [
-                    'variable_indicator_id' => $indicatorId,
+                    'variable_indicator_id' => $indicator->indicator_id, // Gunakan ID yang sedang dilooping
                     'variable_name' => $vars['D'],
                     'variable_type' => 'D',
                     'variable_description' => 'Denominator (Penyebut)',
                 ];
             }
         }
+        // --- BATAS PERBAIKAN ---
 
         // 5. Insert semua data sekaligus
-        DB::table('hospital_survey_indicator_variable')->insert($variablesToInsert);
+        if (! empty($variablesToInsert)) {
+            DB::table('hospital_survey_indicator_variable')->insert($variablesToInsert);
+        }
     }
 }
