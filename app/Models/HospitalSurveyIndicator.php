@@ -21,7 +21,8 @@ class HospitalSurveyIndicator extends Model
 
     // Eager load otomatis untuk relasi yang sering dipakai
     // 'user' adalah opsional, bisa ditambahkan jika selalu ingin load PIC
-    protected $with = ['imutCategory'];
+    // Temporarily remove eager loading for debugging
+    // protected $with = ['imutCategory'];
 
     // public $timestamps = false; // ❌ KITA HAPUS, KARENA MIGRASI BARU PAKAI timestamps()
 
@@ -47,6 +48,10 @@ class HospitalSurveyIndicator extends Model
         'penanggung_jawab_id',
         'indicator_record_status',
         'files',
+    ];
+
+    protected $casts = [
+        'files' => 'array',
     ];
 
     // Relasi ke Variabel (Nemu/Demu)

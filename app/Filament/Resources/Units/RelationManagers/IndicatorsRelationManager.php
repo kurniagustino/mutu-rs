@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Units\RelationManagers;
 use App\Filament\Resources\Indicators\IndicatorResource;
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -29,8 +28,8 @@ class IndicatorsRelationManager extends RelationManager
                     ->label('Nama Indikator'),
             ])
             ->headerActions([
-                // GANTI CreateAction MENJADI AttachAction
                 AttachAction::make()
+                    ->multiple() // Aktifkan multi select
                     ->preloadRecordSelect()
                     ->recordTitleAttribute('indicator_name'),
             ])

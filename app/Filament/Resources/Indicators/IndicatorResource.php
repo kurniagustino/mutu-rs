@@ -53,15 +53,11 @@ class IndicatorResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes()
-            ->join('imut_category', 'hospital_survey_indicator.indicator_category_id', '=', 'imut_category.imut_category_id')
-            ->select('hospital_survey_indicator.*', 'imut_category.imut_name_category')
-            ->orderByRaw("CASE 
-                WHEN imut_category.imut_name_category = 'Wajib' THEN 1
-                WHEN imut_category.imut_name_category = 'Lokal' THEN 2
-                WHEN imut_category.imut_name_category = 'Area Manajerial' THEN 3
-                ELSE 4
-            END");
+        return static::getModel()::query()
+            ->select([
+                'hospital_survey_indicator.*',
+                'imut_category.imut_name_category',
+            ])
+            ->leftJoin('imut_category', 'hospital_survey_indicator.indicator_category_id', '=', 'imut_category.imut_category_id');
     }
 }
