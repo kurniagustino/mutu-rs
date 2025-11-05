@@ -241,11 +241,7 @@
             display: inline-block;
         }
 
-        /* Checkbox - Hide */
-        input[type="checkbox"],
-        .fi-fo-checkbox {
-            display: none !important;
-        }
+
 
         /* Footer */
         .footer {
