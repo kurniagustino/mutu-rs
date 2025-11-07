@@ -57,11 +57,15 @@ class IndicatorForm
                             ->placeholder('cth: Struktur, Proses, Outcome')
                             ->required(),
 
-                        TextInput::make('indicator_monitoring_area')
+                        // ✅ PERUBAHAN: Dari TextInput menjadi Select multiple
+                        Select::make('units')
                             ->label('Area Monitor (Unit)')
-                            ->placeholder('cth: Rawat Inap, IGD, Poliklinik')
-                            ->maxLength(200)
-                            ->columnSpanFull(),
+                            ->relationship('units', 'nama_unit')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->placeholder('Pilih satu atau lebih unit')
+                            ->columnSpanFull(), // <-- Pastikan ini ada
 
                         TextInput::make('indicator_target')
                             ->label('Target')
