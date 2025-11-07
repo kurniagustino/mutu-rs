@@ -269,143 +269,213 @@
     <x-filament::modal id="proses-data-modal" width="6xl" :close-by-clicking-away="false">
         <x-slot name="heading">
             <div class="flex items-center space-x-2">
-                <svg class="w-6 h-6 text-blue-600" ...>...</svg>
+                <span class="text-xl">📊</span>
                 <span>{{ $editMode ? '✏️ Edit Data' : '📊 Input Data' }}</span>
             </div>
         </x-slot>
+
         @if ($selectedIndicator)
-            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <h3 class="font-bold text-lg text-blue-900 dark:text-blue-100 mb-1">
-                    {{ strtoupper($selectedIndicator->indicator_name ?? '') }}</h3>
-                <p class="text-sm text-blue-700 dark:text-blue-300">( Unit: <span class="font-semibold">
-                        {{ $userUnits->first()?->nama_unit ?? 'N/A' }}
-                    </span> )
-                </p>
-            </div>
-            <div class="space-y-6">
-                <div>{{ $this->prosesDataForm }}</div>
-                @if ($selectedIndicator->variables && count($selectedIndicator->variables) > 0)
-                    <div>
-                        <h4 class="font-bold text-base mb-3 text-gray-900 dark:text-gray-100">Data Variabel</h4>
-                        <div class="overflow-x-auto border border-gray-300 dark:border-gray-600 rounded-lg">
-                            <table class="w-full">
-                                <thead class="bg-gray-100 dark:bg-gray-800">
-                                    <tr>
-                                        <th
-                                            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
-                                            No
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
-                                            Nama Variabel
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
-                                            Tipe
-                                        </th>
-                                        <th
-                                            class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600 w-32">
-                                            Nilai
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php $index = 1; @endphp
-                                    @foreach ($selectedIndicator->variables as $variable)
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                            <td
-                                                class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                                {{ $index }}
-                                            </td>
-                                            <td class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-                                                @php $badgeTooltip = !empty($variable->badge_tooltip) ? $variable->badge_tooltip : null; @endphp
-                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100"
-                                                    @if ($badgeTooltip) title="{{ $badgeTooltip }}" @endif>
-                                                    {{ $variable->variable_name ?? '-' }}
-                                                </div>
-                                                @if ($variable->variable_description)
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        {{ $variable->variable_description }}
-                                                    </div>
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
-                                                @if ($variable->variable_type === 'N')
-                                                    @php $numeratorTooltip = !empty($variable->badge_tooltip_numerator) ? $variable->badge_tooltip_numerator : null; @endphp
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                                        @if ($numeratorTooltip) title="{{ $numeratorTooltip }}" @endif>
-                                                        Numerator
-                                                    </span>
-                                                @else
-                                                    @php $denominatorTooltip = !empty($variable->badge_tooltip_denominator) ? $variable->badge_tooltip_denominator : null; @endphp
-                                                    <span
-                                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                                        @if ($denominatorTooltip) title="{{ $denominatorTooltip }}" @endif>
-                                                        Denominator
-                                                    </span>
-                                                @endif
-                                            </td>
-                                            <td class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-                                                @php
-                                                    $inputTooltip = !empty($variable->input_tooltip)
-                                                        ? $variable->input_tooltip
-                                                        : null;
-                                                @endphp
-                                                <input type="number"
-                                                    wire:model="prosesData.{{ $variable->variable_type === 'N' ? 'numerator' : 'denominator' }}_{{ $variable->variable_id }}"
-                                                    placeholder="0" step="any" min="0"
-                                                    class="w-full px-3 py-2 text-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                                                    required
-                                                    @if ($inputTooltip) title="{{ $inputTooltip }}" @endif />
-                                            </td>
+            {{-- 
+                ============================================================
+                PERUBAHAN STRUKTUR: 
+                Grid sekarang hanya untuk input dan sidebar.
+                Definisi akan diletakkan di luar grid di bawah.
+                ============================================================
+            --}}
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {{-- KOLOM KIRI (UTAMA) --}}
+                <div class="lg:col-span-2 space-y-6">
+
+                    {{-- Section 1: Input Data Variabel --}}
+                    <x-filament::section collapsible icon="heroicon-o-table-cells">
+                        <x-slot name="header">
+                            Input Data Variabel
+                        </x-slot>
+                        <x-slot name="description">
+                            Isi nilai numerator dan denominator pada tabel di bawah ini.
+                        </x-slot>
+
+                        {{-- Isi section: Tabel yang sudah ada --}}
+                        @if ($selectedIndicator->variables && count($selectedIndicator->variables) > 0)
+                            <div class="overflow-x-auto border border-gray-300 dark:border-gray-600 rounded-lg">
+                                <table class="w-full">
+                                    {{-- ... (Isi tabel tetap sama) ... --}}
+                                    <thead class="bg-gray-100 dark:bg-gray-800">
+                                        <tr>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
+                                                No
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
+                                                Nama Variabel
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
+                                                Tipe
+                                            </th>
+                                            <th
+                                                class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600 w-32">
+                                                Nilai
+                                            </th>
                                         </tr>
-                                        @php $index++; @endphp
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        @php $index = 1; @endphp
+                                        @foreach ($selectedIndicator->variables as $variable)
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td
+                                                    class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ $index }}
+                                                </td>
+                                                <td class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+                                                    @php $badgeTooltip = !empty($variable->badge_tooltip) ? $variable->badge_tooltip : null; @endphp
+                                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                                                        @if ($badgeTooltip) title="{{ $badgeTooltip }}" @endif>
+                                                        {{ $variable->variable_name ?? '-' }}
+                                                    </div>
+                                                    @if ($variable->variable_description)
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                            {{ $variable->variable_description }}
+                                                        </div>
+                                                    @endif
+                                                </td>
+                                                <td
+                                                    class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
+                                                    @if ($variable->variable_type === 'N')
+                                                        @php $numeratorTooltip = !empty($variable->badge_tooltip_numerator) ? $variable->badge_tooltip_numerator : null; @endphp
+                                                        <span
+                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                            @if ($numeratorTooltip) title="{{ $numeratorTooltip }}" @endif>
+                                                            Numerator
+                                                        </span>
+                                                    @else
+                                                        @php $denominatorTooltip = !empty($variable->badge_tooltip_denominator) ? $variable->badge_tooltip_denominator : null; @endphp
+                                                        <span
+                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                                            @if ($denominatorTooltip) title="{{ $denominatorTooltip }}" @endif>
+                                                            Denominator
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+                                                    @php
+                                                        $inputTooltip = !empty($variable->input_tooltip)
+                                                            ? $variable->input_tooltip
+                                                            : null;
+                                                    @endphp
+                                                    <input type="number"
+                                                        wire:model="prosesData.{{ $variable->variable_type === 'N' ? 'numerator' : 'denominator' }}_{{ $variable->variable_id }}"
+                                                        placeholder="0" step="any" min="0"
+                                                        class="w-full px-3 py-2 text-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                                                        required
+                                                        @if ($inputTooltip) title="{{ $inputTooltip }}" @endif />
+                                                </td>
+                                            </tr>
+                                            @php $index++; @endphp
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div
+                                class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                                    ⚠️ Indikator ini belum memiliki variabel (Numerator/Denominator).
+                                </p>
+                            </div>
+                        @endif
+                    </x-filament::section>
+
+                    {{-- Tombol Aksi --}}
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            wire:click="$dispatch('close-modal', { id: 'proses-data-modal' })">Batal</button>
+                        <button type="button"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-green-100 text-green-800 hover:bg-green-200"
+                            wire:click="simpanDanLanjut">Simpan & Lanjut</button>
+                        <button type="button"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-blue-100 text-blue-800 hover:bg-blue-200"
+                            wire:click="simpanData">Simpan</button>
                     </div>
-                @else
+
+                    {{-- 
+                        ============================================================
+                        PERUBAHAN UTAMA: Section Profil Indikator DIHAPUS dari sini
+                        ============================================================
+                    --}}
+
+                </div>
+
+                {{-- KOLOM KANAN (SIDEBAR) --}}
+                <div class="lg:col-span-1 space-y-6">
+
+                    {{-- Info Indikator & Unit --}}
                     <div
-                        class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                            ⚠️ Indikator ini belum memiliki variabel (Numerator/Denominator). Silakan tambahkan variabel
-                            terlebih dahulu.
+                        class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <h3 class="font-bold text-lg text-blue-900 dark:text-blue-100 mb-1">
+                            {{ strtoupper($selectedIndicator->indicator_name ?? '') }}</h3>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">( Unit: <span class="font-semibold">
+                                {{ $userUnits->first()?->nama_unit ?? 'N/A' }}
+                            </span> )
                         </p>
                     </div>
-                @endif
+
+                    {{-- Section 3: Detail Laporan --}}
+                    <x-filament::section collapsible icon="heroicon-o-calendar-days">
+                        <x-slot name="header">
+                            Detail Laporan
+                        </x-slot>
+                        <x-slot name="description">
+                            Pilih tanggal pelaporan untuk data yang Anda masukkan.
+                        </x-slot>
+
+                        {{-- Isi section: Form Tanggal Lapor --}}
+                        {{ $this->prosesDataForm }}
+                    </x-filament::section>
+
+                </div>
+            </div>
+            {{-- 
+                ============================================================
+                PERUBAHAN UTAMA: Section Profil Indikator DIPINDAHKAN ke sini
+                ============================================================
+            --}}
+            <div class="mt-6">
                 @if ($selectedIndicator->indicator_definition)
-                    <div class="border-l-4 border-blue-500 pl-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-r">
-                        <h4 class="font-bold text-base mb-3 text-gray-900 dark:text-gray-100">Profil Indikator</h4>
+                    <x-filament::section collapsible collapsed icon="heroicon-o-information-circle">
+                        <x-slot name="header">
+                            Profil Indikator
+                        </x-slot>
+                        <x-slot name="description">
+                            Lihat definisi dan sumber data sebagai panduan pengisian.
+                        </x-slot>
+
+                        {{-- Isi section: Definisi dan Sumber Data --}}
                         <div class="grid grid-cols-12 gap-4 text-sm">
                             <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">Definisi</div>
                             <div class="col-span-9 text-gray-900 dark:text-gray-100">
                                 {{ $selectedIndicator->indicator_definition }}
                             </div>
                             @if ($selectedIndicator->indicator_source_of_data)
-                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">Sumber</div>
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">Sumber
+                                </div>
                                 <div class="col-span-9 text-gray-900 dark:text-gray-100">
                                     {{ $selectedIndicator->indicator_source_of_data }}
                                 </div>
                             @endif
                         </div>
-                    </div>
+                    </x-filament::section>
                 @endif
             </div>
+
         @endif
-        <x-slot name="footerActions">
-            <button type="button"
-                class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-800 hover:bg-gray-200"
-                wire:click="$dispatch('close-modal', { id: 'proses-data-modal' })">Batal</button>
-            <button type="button"
-                class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-green-100 text-green-800 hover:bg-green-200"
-                wire:click="simpanDanLanjut">Simpan & Lanjut</button>
-            <button type="button"
-                class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-blue-100 text-blue-800 hover:bg-blue-200"
-                wire:click="simpanData">Simpan</button>
-        </x-slot>
+
+        {{-- Slot footerActions sudah dikosongkan pada langkah sebelumnya --}}
+
     </x-filament::modal>
 
     {{-- Modal Persentase --}}
