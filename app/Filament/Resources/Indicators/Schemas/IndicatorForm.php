@@ -67,6 +67,16 @@ class IndicatorForm
                             ->placeholder('Pilih satu atau lebih unit')
                             ->columnSpanFull(), // <-- Pastikan ini ada
 
+                        // ✅ BARU: Input untuk Status Kategori
+                        Select::make('statuses')
+                            ->label('Status Indikator')
+                            ->relationship('statuses', 'nama_status') // ✅ PERBAIKAN: Kolom yang benar adalah 'nama_status'
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->placeholder('Pilih satu atau lebih status')
+                            ->columnSpanFull(), // <-- Pastikan ini ada
+
                         TextInput::make('indicator_target')
                             ->label('Target')
                             ->maxLength(10)
