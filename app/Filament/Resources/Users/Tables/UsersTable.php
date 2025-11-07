@@ -2,21 +2,20 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Exports\UserExporter;
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-
-use Filament\Actions\ExportAction;
-use App\Filament\Exports\UserExporter;
-
-use Filament\Actions\Action;
-use App\Models\User;
+use FPDF;
 
 class UsersTable
 {
@@ -29,8 +28,8 @@ class UsersTable
                 Action::make('export_pdf')
                     ->label('Export PDF')
                     ->action(function () {
-                        $users = User::all();
-                        $pdf = new \FPDF();
+                        $users = User::with('ruangans.unit')->get();
+                        $pdf = new FPDF;
                         $pdf->AddPage('L', 'A4');
                         $pdf->SetFont('Arial', 'B', 12);
 
@@ -41,21 +40,26 @@ class UsersTable
                         $pdf->Cell(10, 10, 'ID', 1);
                         $pdf->Cell(40, 10, 'Name', 1);
                         $pdf->Cell(50, 10, 'Email', 1);
+                        $pdf->Cell(50, 10, 'Departemen/Unit', 1);
                         $pdf->Cell(30, 10, 'Username', 1);
                         $pdf->Cell(30, 10, 'NIP', 1);
                         $pdf->Cell(40, 10, 'Roles', 1);
-                        $pdf->Cell(40, 10, 'Created At', 1);
+                        $pdf->Cell(30, 10, 'Created At', 1);
                         $pdf->Ln();
 
                         $pdf->SetFont('Arial', '', 8);
                         foreach ($users as $user) {
+                            // Mengambil nama departemen/unit dari relasi
+                            $departments = $user->ruangans->pluck('unit.nama_unit')->unique()->join(', ');
+
                             $pdf->Cell(10, 10, $user->id, 1);
                             $pdf->Cell(40, 10, $user->name, 1);
                             $pdf->Cell(50, 10, $user->email, 1);
+                            $pdf->Cell(50, 10, $departments, 1);
                             $pdf->Cell(30, 10, $user->username, 1);
                             $pdf->Cell(30, 10, $user->NIP, 1);
                             $pdf->Cell(40, 10, $user->roles->pluck('name')->join(', '), 1);
-                            $pdf->Cell(40, 10, $user->created_at->format('Y-m-d H:i:s'), 1);
+                            $pdf->Cell(30, 10, $user->created_at->format('Y-m-d'), 1);
                             $pdf->Ln();
                         }
 
@@ -86,8 +90,9 @@ class UsersTable
                     ->state(function ($record) {
                         $departments = $record->ruangans->pluck('nama_ruang')->unique()->values();
                         if ($departments->count() > 1) {
-                            return $departments->first() . ' (+' . ($departments->count() - 1) . ')';
+                            return $departments->first().' (+'.($departments->count() - 1).')';
                         }
+
                         return $departments->first() ?? '-';
                     })
                     ->tooltip(function ($record) {
