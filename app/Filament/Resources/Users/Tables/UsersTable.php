@@ -12,11 +12,58 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
+use Filament\Actions\ExportAction;
+use App\Filament\Exports\UserExporter;
+
+use Filament\Actions\Action;
+use App\Models\User;
+
 class UsersTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(UserExporter::class),
+                Action::make('export_pdf')
+                    ->label('Export PDF')
+                    ->action(function () {
+                        $users = User::all();
+                        $pdf = new \FPDF();
+                        $pdf->AddPage('L', 'A4');
+                        $pdf->SetFont('Arial', 'B', 12);
+
+                        $pdf->Cell(0, 10, 'Users Data', 0, 1, 'C');
+                        $pdf->Ln(10);
+
+                        $pdf->SetFont('Arial', 'B', 10);
+                        $pdf->Cell(10, 10, 'ID', 1);
+                        $pdf->Cell(40, 10, 'Name', 1);
+                        $pdf->Cell(50, 10, 'Email', 1);
+                        $pdf->Cell(30, 10, 'Username', 1);
+                        $pdf->Cell(30, 10, 'NIP', 1);
+                        $pdf->Cell(40, 10, 'Roles', 1);
+                        $pdf->Cell(40, 10, 'Created At', 1);
+                        $pdf->Ln();
+
+                        $pdf->SetFont('Arial', '', 8);
+                        foreach ($users as $user) {
+                            $pdf->Cell(10, 10, $user->id, 1);
+                            $pdf->Cell(40, 10, $user->name, 1);
+                            $pdf->Cell(50, 10, $user->email, 1);
+                            $pdf->Cell(30, 10, $user->username, 1);
+                            $pdf->Cell(30, 10, $user->NIP, 1);
+                            $pdf->Cell(40, 10, $user->roles->pluck('name')->join(', '), 1);
+                            $pdf->Cell(40, 10, $user->created_at->format('Y-m-d H:i:s'), 1);
+                            $pdf->Ln();
+                        }
+
+                        return response()->streamDownload(function () use ($pdf) {
+                            echo $pdf->Output('S');
+                        }, 'users.pdf');
+                    }),
+            ])
             ->columns([
                 // ✅ Existing columns (tidak diubah)
                 TextColumn::make('name')

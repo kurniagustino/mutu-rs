@@ -48,6 +48,7 @@ class UserResource extends Resource
             'index' => ListUsers::route('/'),
             'create' => CreateUser::route('/create'),
             'edit' => EditUser::route('/{record}/edit'),
+            'export-pdf' => \App\Filament\Resources\Users\Pages\ExportPdf::route('/export-pdf'),
         ];
     }
 

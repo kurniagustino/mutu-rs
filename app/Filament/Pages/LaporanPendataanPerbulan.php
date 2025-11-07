@@ -5,12 +5,15 @@ namespace App\Filament\Pages;
 use App\Models\HospitalSurveyIndicator;
 use App\Models\HospitalSurveyIndicatorResult;
 use App\Models\ImutCategory;
+use App\Models\User;
 use BackedEnum;
+use FPDF;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
@@ -296,7 +299,7 @@ class LaporanPendataanPerbulan extends Page implements HasForms
      * ✅ FUNGSI INI DIIMPLEMENTASIKAN
      * Cetak PDF laporan - buka di window baru
      */
-    public function cetakPdf(): void
+    public function cetakPdf()
     {
         if (empty($this->indicators) || ! $this->showResults) {
             Notification::make()
@@ -308,7 +311,61 @@ class LaporanPendataanPerbulan extends Page implements HasForms
             return;
         }
 
-        // Dispatch event untuk membuka window baru dengan view PDF
-        $this->dispatch('open-pdf-window');
+        return response()->streamDownload(function () {
+            $pdf = new FPDF();
+            $pdf->AddPage();
+            $pdf->SetFont('Arial', 'B', 16);
+
+            $bulanNama = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+            ];
+
+            $category = ImutCategory::find($this->imut_category_id)->imut_name_category ?? 'N/A';
+            $user = Auth::user();
+            $unit = $user->ruangans->first()->nama_ruang ?? 'N/A';
+
+            // Header
+            $pdf->Cell(0, 10, 'Laporan Pendataan IMUT Perbulan', 0, 1, 'C');
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->Cell(0, 7, 'Unit: ' . $unit, 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Kategori: ' . $category, 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Periode: ' . ($bulanNama[$this->bulan] ?? '') . ' ' . $this->tahun, 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Tanggal Cetak: ' . now()->translatedFormat('d F Y, H:i:s'), 0, 1, 'C');
+            $pdf->Ln(10);
+
+            // Table Header
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->SetFillColor(242, 242, 242);
+            $pdf->Cell(10, 10, 'No', 1, 0, 'C', true);
+            $pdf->Cell(80, 10, 'Indikator Mutu', 1, 0, 'C', true);
+            $pdf->Cell(40, 10, 'Unit', 1, 0, 'C', true);
+            $pdf->Cell(30, 10, 'Tipe', 1, 0, 'C', true);
+            $pdf->Cell(30, 10, 'Total Pendataan', 1, 1, 'C', true);
+
+            // Table Body
+            $pdf->SetFont('Arial', '', 10);
+            foreach ($this->indicators as $index => $indicator) {
+                $pdf->Cell(10, 10, $index + 1, 1, 0, 'C');
+                
+                // MultiCell for indicator title
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
+                $pdf->MultiCell(80, 5, $indicator['title'] ?? '', 0, 'L');
+                $pdf->SetXY($x + 80, $y);
+
+                $pdf->Cell(40, 10, $indicator['area'] ?? 'N/A', 1, 0, 'L');
+                $pdf->Cell(30, 10, $indicator['type'] ?? 'N/A', 1, 0, 'L');
+                $pdf->Cell(30, 10, $indicator['total_pendataan'] ?? 0, 1, 1, 'C');
+            }
+
+            // Footer
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->Cell(160, 10, 'Total Indikator:', 1, 0, 'R', true);
+            $pdf->Cell(30, 10, count($this->indicators), 1, 1, 'C', true);
+
+            echo $pdf->Output('S');
+        }, 'laporan-pendataan-' . $this->tahun . '-' . $this->bulan . '.pdf');
     }
 }
