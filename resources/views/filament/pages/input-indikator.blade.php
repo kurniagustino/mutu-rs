@@ -208,47 +208,162 @@
                                     <span class="inline-block w-4 h-4">⬇️</span> Unduh Form Manual
                                 </a>
                             @else
-                                <div class="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                    <span class="inline-block w-4 h-4 text-danger-500">❌</span> Manual Belum Ada
+                                <div
+                                    class="inline-flex items-center gap-1.5 text-xs text-warning-600 dark:text-warning-400">
+                                    <span class="inline-block w-4 h-4">⚠️</span> Manual Belum Ada
                                 </div>
                             @endif
                         </div>
+
+                        {{-- ✅ FITUR BARU: Statistik Indikator --}}
+                        @php
+                            $stats = $this->getIndicatorStats($indicator->indicator_id);
+                            $isWajib = strtolower($indicator->imutCategory?->imut_name_category ?? '') === 'wajib';
+                        @endphp
+
+                        @if ($stats)
+                            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                {{-- Info Terakhir Input & Total Record --}}
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-gray-700 dark:text-gray-300">
+                                        📅 Terakhir Input:
+                                    </span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        @if ($stats['last_input_formatted'])
+                                            {{ $stats['last_input_formatted'] }}
+                                        @else
+                                            <span class="text-gray-500 dark:text-gray-400">Belum ada</span>
+                                        @endif
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-gray-700 dark:text-gray-300">
+                                        📊 Record Bulan Ini:
+                                    </span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">
+                                        {{ $stats['total_records'] }} data
+                                    </span>
+                                </div>
+
+                                {{-- Progress Bar & Pencapaian --}}
+                                @if ($stats['total_records'] > 0 && $indicator->indicator_target)
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between items-center text-xs">
+                                            <span class="text-gray-700 dark:text-gray-300">Pencapaian:</span>
+                                            <span
+                                                class="font-bold {{ $stats['achievement'] >= $indicator->indicator_target ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400' }}">
+                                                {{ number_format($stats['achievement'], 2) }}%
+                                            </span>
+                                        </div>
+                                        {{-- Progress Bar --}}
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                            <div class="h-2 rounded-full {{ $stats['achievement'] >= $indicator->indicator_target ? 'bg-green-500 dark:bg-green-400' : 'bg-orange-500 dark:bg-orange-400' }}"
+                                                style="width: {{ min($stats['achievement'], 100) }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Badge Status Pencapaian --}}
+                                    @if ($stats['achievement'] >= $indicator->indicator_target)
+                                        <div
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                            ✅ Target Tercapai
+                                        </div>
+                                    @elseif ($stats['achievement'] >= $indicator->indicator_target * 0.8)
+                                        <div
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100">
+                                            ⚡ Mendekati Target
+                                        </div>
+                                    @else
+                                        <div
+                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
+                                            ⚠️ Belum Tercapai
+                                        </div>
+                                    @endif
+                                @endif
+
+                                {{-- ✅ WARNING DEADLINE untuk Indikator WAJIB --}}
+                                @if ($isWajib && $stats['deadline_warning'])
+                                    @php
+                                        $warning = $stats['deadline_warning'];
+                                    @endphp
+
+                                    @if ($warning['level'] === 'expired')
+                                        <div
+                                            class="mt-2 p-2 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700">
+                                            <div
+                                                class="flex items-center gap-2 text-xs font-bold text-red-800 dark:text-red-200">
+                                                <span class="text-base">🚨</span>
+                                                <span>TERLAMBAT {{ $warning['days'] }} HARI!</span>
+                                            </div>
+                                            <div class="text-xs text-red-700 dark:text-red-300 mt-1">
+                                                Deadline input sudah terlewat
+                                            </div>
+                                        </div>
+                                    @elseif ($warning['level'] === 'danger')
+                                        <div
+                                            class="mt-2 p-2 rounded-lg bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700">
+                                            <div
+                                                class="flex items-center gap-2 text-xs font-bold text-red-800 dark:text-red-200">
+                                                <span class="text-base">⏰</span>
+                                                <span>DEADLINE {{ $warning['days'] }} HARI LAGI!</span>
+                                            </div>
+                                            <div class="text-xs text-red-700 dark:text-red-300 mt-1">
+                                                Batas input: 10 bulan depan
+                                            </div>
+                                        </div>
+                                    @elseif ($warning['level'] === 'warning')
+                                        <div
+                                            class="mt-2 p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700">
+                                            <div
+                                                class="flex items-center gap-2 text-xs font-bold text-yellow-800 dark:text-yellow-200">
+                                                <span class="text-base">⚠️</span>
+                                                <span>Deadline {{ $warning['days'] }} hari lagi</span>
+                                            </div>
+                                            <div class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                                Segera lengkapi data bulan ini
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Tombol Aksi Footer --}}
                     <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                        <div class="flex flex-col gap-2">
-                            <div class="flex gap-2">
-                                @php
-                                    $prosesButtonTooltip = !empty($indicator->badge_tooltips['proses_button'])
-                                        ? $indicator->badge_tooltips['proses_button']
-                                        : null;
-                                    $rekapButtonTooltip = !empty($indicator->badge_tooltips['rekap_button'])
-                                        ? $indicator->badge_tooltips['rekap_button']
-                                        : null;
-                                @endphp
-                                <button type="button"
-                                    class="flex-1 inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                                    wire:click="openProsesModal({{ $indicator->indicator_id }})"
-                                    @if ($prosesButtonTooltip) title="{{ $prosesButtonTooltip }}" @endif>
-                                    Proses
-                                </button>
-                                <button type="button"
-                                    class="flex-1 inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
-                                    wire:click="openRekapModal({{ $indicator->indicator_id }})"
-                                    @if ($rekapButtonTooltip) title="{{ $rekapButtonTooltip }}" @endif>
-                                    Rekap
-                                </button>
-                            </div>
+                        <div class="grid grid-cols-3 gap-2">
                             @php
+                                $prosesButtonTooltip = !empty($indicator->badge_tooltips['proses_button'])
+                                    ? $indicator->badge_tooltips['proses_button']
+                                    : 'Input data indikator';
+                                $rekapButtonTooltip = !empty($indicator->badge_tooltips['rekap_button'])
+                                    ? $indicator->badge_tooltips['rekap_button']
+                                    : 'Lihat rekap & kelola data';
                                 $persentaseButtonTooltip = !empty($indicator->badge_tooltips['persentase_button'])
                                     ? $indicator->badge_tooltips['persentase_button']
-                                    : null;
+                                    : 'Lihat grafik persentase';
                             @endphp
+
                             <button type="button"
-                                class="w-full inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium bg-red-100 text-red-800 hover:bg-red-200"
+                                class="inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-400 dark:text-gray-900 dark:hover:bg-yellow-300 transition-colors"
+                                wire:click="openProsesModal({{ $indicator->indicator_id }})"
+                                title="{{ $prosesButtonTooltip }}">
+                                Proses
+                            </button>
+
+                            <button type="button"
+                                class="inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 transition-colors"
+                                wire:click="openRekapModal({{ $indicator->indicator_id }})"
+                                title="{{ $rekapButtonTooltip }}">
+                                Rekap
+                            </button>
+
+                            <button type="button"
+                                class="inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium bg-pink-100 text-pink-800 hover:bg-pink-200 dark:bg-pink-900 dark:text-pink-200 dark:hover:bg-pink-800 transition-colors"
                                 wire:click="openPersentaseModal({{ $indicator->indicator_id }})"
-                                @if ($persentaseButtonTooltip) title="{{ $persentaseButtonTooltip }}" @endif>
+                                title="{{ $persentaseButtonTooltip }}">
                                 Persentase
                             </button>
                         </div>
@@ -270,7 +385,7 @@
         <x-slot name="heading">
             <div class="flex items-center space-x-2">
                 <span class="text-xl">📊</span>
-                <span>{{ $editMode ? '✏️ Edit Data' : '📊 Input Data' }}</span>
+                <span>{{ $editMode ? '✏️ Edit Data' : 'Input Data' }}</span>
             </div>
         </x-slot>
 
@@ -342,22 +457,40 @@
                                                         </div>
                                                     @endif
                                                 </td>
-                                                <td
-                                                    class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
+                                                <td>
                                                     @if ($variable->variable_type === 'N')
                                                         @php $numeratorTooltip = !empty($variable->badge_tooltip_numerator) ? $variable->badge_tooltip_numerator : null; @endphp
-                                                        <span
-                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                                            @if ($numeratorTooltip) title="{{ $numeratorTooltip }}" @endif>
-                                                            Numerator
-                                                        </span>
+                                                        <div
+                                                            class="mt-2 p-2 rounded-lg bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-600">
+                                                            <div
+                                                                class="flex items-center gap-2 text-xs font-bold text-red-900 dark:text-red-100">
+                                                                <span
+                                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                                    @if ($numeratorTooltip) title="{{ $numeratorTooltip }}" @endif>
+                                                                    Numerator
+                                                                </span>
+                                                            </div>
+                                                            <div class="text-xs text-red-800 dark:text-red-200 mt-1">
+                                                                <!-- Additional numerator info if needed -->
+                                                            </div>
+                                                        </div>
                                                     @else
                                                         @php $denominatorTooltip = !empty($variable->badge_tooltip_denominator) ? $variable->badge_tooltip_denominator : null; @endphp
-                                                        <span
-                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                                            @if ($denominatorTooltip) title="{{ $denominatorTooltip }}" @endif>
-                                                            Denominator
-                                                        </span>
+                                                        <div
+                                                            class="mt-2 p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-600">
+                                                            <div
+                                                                class="flex items-center gap-2 text-xs font-bold text-yellow-900 dark:text-yellow-100">
+                                                                <span
+                                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
+                                                                    @if ($denominatorTooltip) title="{{ $denominatorTooltip }}" @endif>
+                                                                    Denominator
+                                                                </span>
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-yellow-800 dark:text-yellow-200 mt-1">
+                                                                <!-- Additional denominator info if needed -->
+                                                            </div>
+                                                        </div>
                                                     @endif
                                                 </td>
                                                 <td class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
@@ -392,13 +525,13 @@
                     {{-- Tombol Aksi --}}
                     <div class="flex justify-end gap-2">
                         <button type="button"
-                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600"
                             wire:click="$dispatch('close-modal', { id: 'proses-data-modal' })">Batal</button>
                         <button type="button"
-                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-green-100 text-green-800 hover:bg-green-200"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-600"
                             wire:click="simpanDanLanjut">Simpan & Lanjut</button>
                         <button type="button"
-                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-blue-100 text-blue-800 hover:bg-blue-200"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md text-sm bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100 hover:bg-blue-200 dark:hover:bg-blue-600"
                             wire:click="simpanData">Simpan</button>
                     </div>
 
@@ -445,26 +578,159 @@
                 ============================================================
             --}}
             <div class="mt-6">
-                @if ($selectedIndicator->indicator_definition)
+                @if ($selectedIndicator)
                     <x-filament::section collapsible collapsed icon="heroicon-o-information-circle">
                         <x-slot name="header">
-                            Profil Indikator
+                            📋 Profil Indikator
                         </x-slot>
                         <x-slot name="description">
                             Lihat definisi dan sumber data sebagai panduan pengisian.
                         </x-slot>
 
-                        {{-- Isi section: Definisi dan Sumber Data --}}
-                        <div class="grid grid-cols-12 gap-4 text-sm">
-                            <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">Definisi</div>
-                            <div class="col-span-9 text-gray-900 dark:text-gray-100">
-                                {{ $selectedIndicator->indicator_definition }}
-                            </div>
-                            @if ($selectedIndicator->indicator_source_of_data)
-                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">Sumber
+                        {{-- Isi section: Informasi Lengkap Indikator --}}
+                        <div class="space-y-4">
+                            {{-- Definisi --}}
+                            @if ($selectedIndicator->indicator_definition)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        📖 Definisi
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_definition }}
+                                    </div>
                                 </div>
-                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
-                                    {{ $selectedIndicator->indicator_source_of_data }}
+                            @endif
+
+                            {{-- Dimensi Mutu --}}
+                            @if ($selectedIndicator->dimensi_mutu)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        🎯 Dimensi Mutu
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->dimensi_mutu }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Tujuan --}}
+                            @if ($selectedIndicator->tujuan)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        🎓 Tujuan
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->tujuan }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Kriteria Inklusif --}}
+                            @if ($selectedIndicator->indicator_criteria_inclusive)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        ✅ Kriteria Inklusif
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_criteria_inclusive }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Kriteria Eksklusif --}}
+                            @if ($selectedIndicator->indicator_criteria_exclusive)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        ❌ Kriteria Eksklusif
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_criteria_exclusive }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Sumber Data --}}
+                            @if ($selectedIndicator->indicator_source_of_data)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        📊 Sumber Data
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_source_of_data }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Satuan Pengukuran --}}
+                            @if ($selectedIndicator->satuan_pengukuran)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        📏 Satuan Pengukuran
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->satuan_pengukuran }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Target --}}
+                            @if ($selectedIndicator->indicator_target)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        🎯 Target
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                            {{ $selectedIndicator->indicator_target }}%
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Tipe Indikator --}}
+                            @if ($selectedIndicator->indicator_type)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        🏷️ Tipe Indikator
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_type }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Frekuensi Monitoring --}}
+                            @if ($selectedIndicator->indicator_frequency)
+                                <div
+                                    class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        🔄 Frekuensi Monitoring
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_frequency }}
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Area Monitoring --}}
+                            @if ($selectedIndicator->indicator_monitoring_area)
+                                <div class="grid grid-cols-12 gap-4 text-sm">
+                                    <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">
+                                        🏥 Area Monitoring
+                                    </div>
+                                    <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                        {{ $selectedIndicator->indicator_monitoring_area }}
+                                    </div>
                                 </div>
                             @endif
                         </div>
@@ -553,6 +819,73 @@
                         </select>
                     </div>
                 </div>
+            </div>
+
+            {{-- Profil Indikator di Modal Persentase --}}
+            <div class="mb-6">
+                <x-filament::section collapsible collapsed icon="heroicon-o-information-circle">
+                    <x-slot name="header">
+                        📋 Profil Indikator
+                    </x-slot>
+                    <x-slot name="description">
+                        Informasi lengkap tentang indikator ini.
+                    </x-slot>
+
+                    <div class="space-y-4">
+                        @if ($selectedIndicatorForReport->indicator_definition)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">📖 Definisi
+                                </div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForReport->indicator_definition }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForReport->dimensi_mutu)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">🎯 Dimensi Mutu
+                                </div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForReport->dimensi_mutu }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForReport->tujuan)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">🎓 Tujuan</div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForReport->tujuan }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForReport->indicator_criteria_inclusive)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">✅ Kriteria
+                                    Inklusif</div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForReport->indicator_criteria_inclusive }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForReport->indicator_criteria_exclusive)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">❌ Kriteria
+                                    Eksklusif</div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForReport->indicator_criteria_exclusive }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForReport->indicator_source_of_data)
+                            <div class="grid grid-cols-12 gap-4 text-sm">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">📊 Sumber Data
+                                </div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForReport->indicator_source_of_data }}</div>
+                            </div>
+                        @endif
+                    </div>
+                </x-filament::section>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -775,6 +1108,73 @@
                 </div>
             </div>
 
+            {{-- Profil Indikator di Modal Rekap --}}
+            <div class="mb-6">
+                <x-filament::section collapsible collapsed icon="heroicon-o-information-circle">
+                    <x-slot name="header">
+                        📋 Profil Indikator
+                    </x-slot>
+                    <x-slot name="description">
+                        Informasi lengkap tentang indikator ini.
+                    </x-slot>
+
+                    <div class="space-y-4">
+                        @if ($selectedIndicatorForRekap->indicator_definition)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">📖 Definisi
+                                </div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForRekap->indicator_definition }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForRekap->dimensi_mutu)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">🎯 Dimensi Mutu
+                                </div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForRekap->dimensi_mutu }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForRekap->tujuan)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">🎓 Tujuan</div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForRekap->tujuan }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForRekap->indicator_criteria_inclusive)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">✅ Kriteria
+                                    Inklusif</div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForRekap->indicator_criteria_inclusive }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForRekap->indicator_criteria_exclusive)
+                            <div
+                                class="grid grid-cols-12 gap-4 text-sm pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">❌ Kriteria
+                                    Eksklusif</div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForRekap->indicator_criteria_exclusive }}</div>
+                            </div>
+                        @endif
+                        @if ($selectedIndicatorForRekap->indicator_source_of_data)
+                            <div class="grid grid-cols-12 gap-4 text-sm">
+                                <div class="col-span-3 font-semibold text-gray-700 dark:text-gray-400">📊 Sumber Data
+                                </div>
+                                <div class="col-span-9 text-gray-900 dark:text-gray-100">
+                                    {{ $selectedIndicatorForRekap->indicator_source_of_data }}</div>
+                            </div>
+                        @endif
+                    </div>
+                </x-filament::section>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {{-- Tabel Data Rekap --}}
                 <div class="lg:col-span-2">
@@ -790,6 +1190,10 @@
                                         <th
                                             class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
                                             Tanggal
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
+                                            Unit/Ruangan
                                         </th>
                                         <th
                                             class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-b border-gray-300 dark:border-gray-600">
@@ -824,6 +1228,13 @@
                                                 </div>
                                             </td>
                                             <td
+                                                class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-gray-900 dark:text-gray-100">
+                                                <div class="font-medium text-sm">{{ $data['unit'] }}</div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $data['ruangan'] }}
+                                                </div>
+                                            </td>
+                                            <td
                                                 class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center text-gray-900 dark:text-gray-100 font-semibold">
                                                 {{ number_format($data['numerator'], 0, ',', '.') }}
                                             </td>
@@ -845,19 +1256,52 @@
                                             <td
                                                 class="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-center">
                                                 <div class="flex justify-center gap-2">
-                                                    <button type="button"
-                                                        class="inline-flex items-center px-2 py-1 rounded text-xs bg-sky-100 text-sky-800 hover:bg-sky-200"
-                                                        wire:click="openEditModal({{ $data['result_id'] }})">Edit</button>
-                                                    <button type="button"
-                                                        class="inline-flex items-center px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200"
-                                                        wire:click="hapusData({{ $data['result_id'] }})"
-                                                        wire:confirm="Apakah Anda yakin ingin menghapus data ini?">Hapus</button>
+                                                    @php
+                                                        // Cek hak akses: super_admin bisa edit/hapus semua
+                                                        // User biasa hanya bisa edit/hapus data dari unit mereka
+                                                        $canEditDelete = false;
+                                                        $currentUser = auth()->user();
+
+                                                        if ($currentUser) {
+                                                            if ($currentUser->hasRole('super_admin')) {
+                                                                $canEditDelete = true;
+                                                            } else {
+                                                                // Cek apakah result_department_id ada di ruangan user
+                                                                $userRuanganIds = $currentUser->ruangans
+                                                                    ->pluck('id_ruang')
+                                                                    ->map(fn($id) => (string) $id)
+                                                                    ->toArray();
+                                                                // Ambil result_department_id dari data
+                                                                $resultDeptId = \App\Models\HospitalSurveyIndicatorResult::find(
+                                                                    $data['result_id'],
+                                                                )?->result_department_id;
+                                                                $canEditDelete = in_array(
+                                                                    $resultDeptId,
+                                                                    $userRuanganIds,
+                                                                );
+                                                            }
+                                                        }
+                                                    @endphp
+
+                                                    @if ($canEditDelete)
+                                                        <button type="button"
+                                                            class="inline-flex items-center px-2 py-1 rounded text-xs bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-900 dark:text-sky-200 dark:hover:bg-sky-800"
+                                                            wire:click="openEditModal({{ $data['result_id'] }})">Edit</button>
+                                                        <button type="button"
+                                                            class="inline-flex items-center px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800"
+                                                            wire:click="hapusData({{ $data['result_id'] }})"
+                                                            wire:confirm="Apakah Anda yakin ingin menghapus data ini?">Hapus</button>
+                                                    @else
+                                                        <span
+                                                            class="text-xs text-gray-400 dark:text-gray-500 italic">Tidak
+                                                            ada akses</span>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6"
+                                            <td colspan="7"
                                                 class="border-b border-gray-200 dark:border-gray-700 px-4 py-12 text-center">
                                                 <div class="flex flex-col items-center">
                                                     <div class="w-12 h-12 mx-auto text-gray-400 mb-3 text-3xl">📥</div>

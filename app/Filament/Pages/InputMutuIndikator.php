@@ -188,6 +188,66 @@ class InputMutuIndikator extends Page implements HasForms
     }
 
     /**
+     * ✅ FUNGSI BARU: Mendapatkan statistik untuk setiap indikator
+     * Menghitung: terakhir input, total record bulan ini, pencapaian, deadline warning
+     */
+    public function getIndicatorStats($indicatorId)
+    {
+        $user = Auth::user();
+        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+            return null;
+        }
+
+        // Ambil data hasil untuk indikator ini (semua unit, karena digabung)
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        $results = HospitalSurveyIndicatorResult::query()
+            ->where('result_indicator_id', $indicatorId)
+            ->where('result_record_status', 'A')
+            ->whereYear('result_period', $currentYear)
+            ->whereMonth('result_period', $currentMonth)
+            ->orderBy('result_period', 'desc')
+            ->get();
+
+        // Hitung statistik
+        $totalRecords = $results->count();
+        $lastInput = $results->first()?->result_period;
+        $totalNumerator = $results->sum(fn ($r) => (float) ($r->result_numerator_value ?? 0));
+        $totalDenominator = $results->sum(fn ($r) => (float) ($r->result_denumerator_value ?? 0));
+        $achievement = $totalDenominator > 0 ? round(($totalNumerator / $totalDenominator) * 100, 2) : 0;
+
+        // Hitung deadline warning untuk indikator WAJIB
+        // Deadline: tanggal 10 bulan berikutnya
+        $deadlineDate = now()->addMonth()->setDay(10)->startOfDay();
+        $daysUntilDeadline = now()->startOfDay()->diffInDays($deadlineDate, false);
+
+        $deadlineWarning = null;
+        if ($daysUntilDeadline <= 7 && $daysUntilDeadline >= 0) {
+            $deadlineWarning = [
+                'days' => $daysUntilDeadline,
+                'level' => $daysUntilDeadline <= 3 ? 'danger' : 'warning', // merah jika <= 3 hari, kuning jika 4-7 hari
+            ];
+        } elseif ($daysUntilDeadline < 0) {
+            $deadlineWarning = [
+                'days' => abs($daysUntilDeadline),
+                'level' => 'expired', // sudah lewat deadline
+            ];
+        }
+
+        return [
+            'total_records' => $totalRecords,
+            'last_input' => $lastInput,
+            'last_input_formatted' => $lastInput ? $lastInput->format('d M Y') : null,
+            'total_numerator' => $totalNumerator,
+            'total_denominator' => $totalDenominator,
+            'achievement' => $achievement,
+            'deadline_warning' => $deadlineWarning,
+            'days_until_deadline' => $daysUntilDeadline,
+        ];
+    }
+
+    /**
      * --------- Custom Unit Tooltip Logic Here -----------
      * Urutkan userUnits agar tooltip yang ditampilkan/dimunculkan duluan berasal dari unit/ruang user yang login (ruangan user didahulukan).
      */
@@ -356,7 +416,9 @@ class InputMutuIndikator extends Page implements HasForms
             return;
         }
 
-        // Ambil ruangan pertama user
+        // ✅ Gunakan ruangan pertama sebagai result_department_id
+        // Setiap user input akan tersimpan dengan ruangannya sendiri
+        // Saat ditampilkan, data dari semua user/ruangan akan digabung
         $ruangan = $user->ruangans->first();
         $ruanganId = (string) $ruangan->id_ruang; // result_department_id adalah string(20)
 
@@ -376,6 +438,19 @@ class InputMutuIndikator extends Page implements HasForms
             } else {
                 $totalDenominator += $value;
             }
+        }
+
+        // ✅ VALIDASI BARU: Denominator tidak boleh lebih kecil dari Numerator
+        if ($totalDenominator < $totalNumerator) {
+            Notification::make()
+                ->title('Data Tidak Valid')
+                ->body('Nilai Denominator ('.$totalDenominator.') tidak boleh lebih kecil dari nilai Numerator ('.$totalNumerator.').')
+                ->danger()
+                ->persistent()
+                ->send();
+
+            // Hentikan eksekusi
+            return;
         }
 
         // Validasi minimal ada data yang diisi
@@ -434,6 +509,27 @@ class InputMutuIndikator extends Page implements HasForms
                         ->send();
                 }
             } else {
+                // ✅ PERBAIKAN: Cek data duplikat berdasarkan indikator + tanggal + USER
+                // Satu user tidak boleh input indikator yang sama di tanggal yang sama 2x
+                // Tapi user lain boleh input, datanya akan digabung saat ditampilkan
+                $existingRecord = HospitalSurveyIndicatorResult::where('result_indicator_id', $formData['id_indikator'])
+                    ->whereDate('result_period', $tanggalLapor)
+                    ->where('last_edited_by', (string) $user->id)
+                    ->first();
+
+                if ($existingRecord) {
+                    Notification::make()
+                        ->title('Data Duplikat Ditemukan')
+                        ->body('Anda sudah pernah menginput data untuk indikator ini pada tanggal '.date('d-m-Y', strtotime($tanggalLapor)).'. Satu user hanya boleh input sekali per tanggal untuk indikator yang sama.')
+                        ->danger()
+                        ->persistent()
+                        ->send();
+
+                    // Hentikan eksekusi
+                    return;
+                }
+                // --- Akhir Perbaikan ---
+
                 // Buat data baru
                 HospitalSurveyIndicatorResult::create([
                     'result_indicator_id' => $formData['id_indikator'],
@@ -451,6 +547,28 @@ class InputMutuIndikator extends Page implements HasForms
                     ->body('Data indikator berhasil disimpan')
                     ->success()
                     ->send();
+
+                // ✅ FITUR BARU: Cari tanggal kosong berikutnya (untuk user ini)
+                $nextDate = \Carbon\Carbon::parse($tanggalLapor)->addDay();
+                $nextAvailableDate = null;
+
+                // Loop untuk mencari slot tanggal kosong pertama untuk user ini
+                // Dibatasi hingga 365 hari ke depan untuk mencegah infinite loop
+                for ($i = 0; $i < 365; $i++) {
+                    $recordExists = HospitalSurveyIndicatorResult::where('result_indicator_id', $formData['id_indikator'])
+                        ->whereDate('result_period', $nextDate)
+                        ->where('last_edited_by', (string) $user->id)
+                        ->exists();
+
+                    if (! $recordExists) {
+                        // Ditemukan tanggal kosong untuk user ini
+                        $nextAvailableDate = $nextDate;
+                        break;
+                    }
+
+                    // Jika user sudah input di tanggal ini, cek hari berikutnya
+                    $nextDate->addDay();
+                }
             }
 
             // Tutup modal jika closeModal = true
@@ -463,7 +581,7 @@ class InputMutuIndikator extends Page implements HasForms
                 // Reset form untuk input berikutnya (simpan dan lanjut)
                 $this->prosesData = [];
                 $this->prosesDataForm->fill([
-                    'tanggal_lapor' => now()->format('Y-m-d'),
+                    'tanggal_lapor' => $nextAvailableDate ? $nextAvailableDate->format('Y-m-d') : now()->format('Y-m-d'), // ✅ Gunakan tanggal baru
                     'id_indikator' => $formData['id_indikator'],
                 ]);
             }
@@ -534,14 +652,12 @@ class InputMutuIndikator extends Page implements HasForms
             return;
         }
 
-        // Ambil ID ruangan user
-        $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
-
+        // ✅ PERBAIKAN: TIDAK perlu filter berdasarkan ruangan
+        // Karena data disimpan per indikator + tanggal, bukan per ruangan
         // Query data hasil
         $query = HospitalSurveyIndicatorResult::query()
             ->where('result_indicator_id', $this->selectedIndicatorForReport->indicator_id)
-            ->where('result_record_status', 'A')
-            ->whereIn('result_department_id', $ruanganIds);
+            ->where('result_record_status', 'A');
 
         // Filter berdasarkan tahun
         if ($this->selectedYear) {
@@ -628,6 +744,7 @@ class InputMutuIndikator extends Page implements HasForms
     /**
      * ✅ FUNGSI INI DIIMPLEMENTASIKAN
      * Memuat data rekap berdasarkan indikator, tahun, dan bulan
+     * Super Admin melihat semua data, user biasa hanya melihat data unit mereka
      */
     public function loadRekapData()
     {
@@ -638,22 +755,33 @@ class InputMutuIndikator extends Page implements HasForms
         }
 
         $user = Auth::user();
-        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+        if (! $user) {
             $this->rekapData = [];
 
             return;
         }
 
-        // Ambil ID ruangan user
-        $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
-
-        // Query data hasil
+        // ✅ PERBAIKAN: Filter berdasarkan role
+        // Super Admin bisa lihat semua data
+        // User biasa hanya lihat data dari ruangan mereka
         $query = HospitalSurveyIndicatorResult::query()
-            ->with(['editor'])
+            ->with(['editor', 'ruangan.unit']) // Load relasi ruangan dan unit
             ->where('result_indicator_id', $this->selectedIndicatorForRekap->indicator_id)
-            ->where('result_record_status', 'A')
-            ->whereIn('result_department_id', $ruanganIds)
-            ->orderBy('result_period', 'desc')
+            ->where('result_record_status', 'A');
+
+        // Jika bukan super_admin, filter berdasarkan ruangan user
+        if (! $user->hasRole('super_admin')) {
+            if (! $user->ruangans || $user->ruangans->isEmpty()) {
+                $this->rekapData = [];
+
+                return;
+            }
+
+            $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
+            $query->whereIn('result_department_id', $ruanganIds);
+        }
+
+        $query->orderBy('result_period', 'desc')
             ->orderBy('result_post_date', 'desc');
 
         // Filter berdasarkan tahun
@@ -683,21 +811,44 @@ class InputMutuIndikator extends Page implements HasForms
                 'persentase' => $persentase,
                 'tanggal_input' => $result->result_post_date->format('d M Y H:i'),
                 'editor' => $result->editor->name ?? '-',
+                'unit' => $result->ruangan?->unit?->unit_name ?? '-', // Tambahkan info unit
+                'ruangan' => $result->ruangan?->nama_ruang ?? '-', // Tambahkan info ruangan
             ];
         })->toArray();
 
-        // Hitung statistik
+        // ✅ PERBAIKAN: Hitung statistik dari SEMUA data (tidak difilter berdasarkan unit)
+        // Karena indikator yang sama harus digabungkan nilainya dari semua unit
+        $statisticsQuery = HospitalSurveyIndicatorResult::query()
+            ->where('result_indicator_id', $this->selectedIndicatorForRekap->indicator_id)
+            ->where('result_record_status', 'A');
+
+        // Filter berdasarkan tahun (sama dengan filter tabel)
+        if ($this->rekapYear) {
+            $statisticsQuery->whereYear('result_period', $this->rekapYear);
+        }
+
+        // Filter berdasarkan bulan (sama dengan filter tabel)
+        if ($this->rekapMonth) {
+            $statisticsQuery->whereMonth('result_period', $this->rekapMonth);
+        }
+
+        $allResults = $statisticsQuery->get();
+
+        // Hitung statistik dari semua data
         $this->rekapStatistics = [
-            'total_records' => count($this->rekapData),
-            'total_numerator' => $results->sum(fn ($r) => (float) ($r->result_numerator_value ?? 0)),
-            'total_denominator' => $results->sum(fn ($r) => (float) ($r->result_denumerator_value ?? 0)),
-            'average_persentase' => count($this->rekapData) > 0
-                ? round(
-                    collect($this->rekapData)->sum('persentase') / count($this->rekapData),
-                    2
-                )
-                : 0,
+            'total_records' => count($allResults),
+            'total_numerator' => $allResults->sum(fn ($r) => (float) ($r->result_numerator_value ?? 0)),
+            'total_denominator' => $allResults->sum(fn ($r) => (float) ($r->result_denumerator_value ?? 0)),
+            'average_persentase' => 0,
         ];
+
+        // Hitung rata-rata persentase
+        if ($this->rekapStatistics['total_denominator'] > 0) {
+            $this->rekapStatistics['average_persentase'] = round(
+                ($this->rekapStatistics['total_numerator'] / $this->rekapStatistics['total_denominator']) * 100,
+                2
+            );
+        }
     }
 
     public function updatedRekapYear()
@@ -710,11 +861,177 @@ class InputMutuIndikator extends Page implements HasForms
         $this->loadRekapData();
     }
 
+    /**
+     * ✅ FUNGSI BARU: Membuka modal proses dalam mode edit.
+     * Dengan validasi hak akses: super_admin bisa edit semua, user biasa hanya bisa edit data unit mereka
+     *
+     * @param  int|null  $resultId
+     */
     public function openEditModal($resultId = null)
-    { /* ... */
+    {
+        if (! $resultId) {
+            return;
+        }
+
+        $result = HospitalSurveyIndicatorResult::find($resultId);
+
+        if (! $result) {
+            Notification::make()
+                ->title('Data tidak ditemukan')
+                ->body('Data yang ingin Anda edit tidak dapat ditemukan.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // ✅ VALIDASI HAK AKSES: Cek apakah user berhak mengedit data ini
+        $user = Auth::user();
+        if (! $user) {
+            Notification::make()
+                ->title('Akses ditolak')
+                ->body('Anda tidak memiliki hak akses.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // Jika bukan super_admin, cek apakah data ini milik unit user
+        if (! $user->hasRole('super_admin')) {
+            if (! $user->ruangans || $user->ruangans->isEmpty()) {
+                Notification::make()
+                    ->title('Akses ditolak')
+                    ->body('Anda tidak memiliki ruangan yang terhubung.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+
+            $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
+
+            if (! in_array($result->result_department_id, $ruanganIds)) {
+                Notification::make()
+                    ->title('Akses ditolak')
+                    ->body('Anda hanya dapat mengedit data dari unit Anda sendiri.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+        }
+
+        // Set mode edit
+        $this->editMode = true;
+        $this->editResultId = $resultId;
+
+        // Siapkan modal proses dengan data yang ada
+        $this->selectedIndicator = HospitalSurveyIndicator::with('variables')->find($result->result_indicator_id);
+
+        // Isi nilai numerator dan denominator
+        // Asumsi: nilai total disimpan dan akan diisi ke input pertama yang sesuai
+        $this->prosesData = [];
+
+        // ✅ PERBAIKAN: Pindahkan pengisian form ke sini dan gabungkan dengan $prosesData
+        // Ini akan mengisi state form dan juga nilai N/D
+        $this->prosesData = [
+            'tanggal_lapor' => $result->result_period->format('Y-m-d'),
+            'id_indikator' => $result->result_indicator_id,
+        ];
+
+        $numeratorSet = false;
+        $denominatorSet = false;
+
+        foreach ($this->selectedIndicator->variables as $variable) {
+            $key = ($variable->variable_type === 'N' ? 'numerator' : 'denominator').'_'.$variable->variable_id;
+            if ($variable->variable_type === 'N' && ! $numeratorSet) {
+                $this->prosesData[$key] = $result->result_numerator_value;
+                $numeratorSet = true;
+            } elseif ($variable->variable_type === 'D' && ! $denominatorSet) {
+                $this->prosesData[$key] = $result->result_denumerator_value;
+                $denominatorSet = true;
+            }
+        }
+
+        // ✅ PERBAIKAN: Panggil fill() setelah semua data di $prosesData siap
+        $this->prosesDataForm->fill($this->prosesData);
+
+        // Tutup modal rekap dan buka modal proses
+        $this->dispatch('close-modal', id: 'rekap-modal');
+        $this->dispatch('open-edit-after-close'); // Event ini akan membuka modal proses setelah jeda singkat
     }
 
+    /**
+     * ✅ FUNGSI BARU: Menghapus data dari modal rekap.
+     * Dengan validasi hak akses: super_admin bisa hapus semua, user biasa hanya bisa hapus data unit mereka
+     *
+     * @param  int|null  $resultId
+     */
     public function hapusData($resultId = null)
-    { /* ... */
+    {
+        if (! $resultId) {
+            return;
+        }
+
+        $result = HospitalSurveyIndicatorResult::find($resultId);
+
+        if (! $result) {
+            Notification::make()
+                ->title('Data tidak ditemukan')
+                ->body('Data yang ingin Anda hapus tidak dapat ditemukan.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // ✅ VALIDASI HAK AKSES: Cek apakah user berhak menghapus data ini
+        $user = Auth::user();
+        if (! $user) {
+            Notification::make()
+                ->title('Akses ditolak')
+                ->body('Anda tidak memiliki hak akses.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // Jika bukan super_admin, cek apakah data ini milik unit user
+        if (! $user->hasRole('super_admin')) {
+            if (! $user->ruangans || $user->ruangans->isEmpty()) {
+                Notification::make()
+                    ->title('Akses ditolak')
+                    ->body('Anda tidak memiliki ruangan yang terhubung.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+
+            $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
+
+            if (! in_array($result->result_department_id, $ruanganIds)) {
+                Notification::make()
+                    ->title('Akses ditolak')
+                    ->body('Anda hanya dapat menghapus data dari unit Anda sendiri.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+        }
+
+        // Hapus data
+        $result->delete();
+
+        Notification::make()
+            ->title('Data berhasil dihapus')
+            ->success()
+            ->send();
+
+        // Muat ulang data di modal rekap
+        $this->loadRekapData();
     }
 }
