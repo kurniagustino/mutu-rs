@@ -2,6 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\DistribusiKategoriChart;
+use App\Filament\Widgets\StatsOverviewWidget;
+use App\Filament\Widgets\StatusCapaianChart;
+use App\Filament\Widgets\TopIndikatorChart;
+use App\Filament\Widgets\TrendCapaianMutuChart;
 use App\Models\HospitalSurveyIndicator;
 use App\Models\HospitalSurveyIndicatorResult;
 use BackedEnum;
@@ -49,6 +54,17 @@ class Rekapitulasi extends Page
         $unitName = $ruangan->unit->nama_unit ?? $ruangan->nama_ruang ?? 'Tidak ada unit';
 
         return "Unit Anda: {$unitName}";
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            StatsOverviewWidget::class,
+            DistribusiKategoriChart::class,
+            StatusCapaianChart::class,
+            TopIndikatorChart::class,
+            TrendCapaianMutuChart::class,
+        ];
     }
 
     /**

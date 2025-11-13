@@ -54,19 +54,20 @@ class GrafikMutu extends Page
 
         if ($user && $user->ruanganUtama) {
             $this->unitName = $user->ruanganUtama->nama_ruang;
-            // Fallback: ambil unitId dari unit_id atau id_unit
-            $unitId = $user->ruanganUtama->unit_id ?? $user->ruanganUtama->id_unit ?? null;
-
-            if ($unitId) {
-                // Ambil semua indikator yang ter-mapping ke unit user
-                $this->indicatorOptions = HospitalSurveyIndicator::whereHas('units', function ($q) use ($unitId) {
-                    $q->where('id_unit', $unitId);
-                })->pluck('indicator_name', 'indicator_id')->toArray();
-
-                // Set indikator default jika ada
-                if (! empty($this->indicatorOptions)) {
-                    $this->indikator = array_key_first($this->indicatorOptions);
-                }
+            $ruanganId = $user->ruanganUtama->id_ruang ?? null;
+            $this->indicatorOptions = [];
+            if ($ruanganId) {
+                // Ambil hanya indikator yang sudah diisi oleh ruangan user
+                $submittedIndicatorIds = HospitalSurveyIndicatorResult::where('result_department_id', $ruanganId)
+                    ->distinct()
+                    ->pluck('result_indicator_id');
+                $this->indicatorOptions = HospitalSurveyIndicator::whereIn('indicator_id', $submittedIndicatorIds)
+                    ->pluck('indicator_name', 'indicator_id')
+                    ->toArray();
+            }
+            // Set indikator default jika ada
+            if (! empty($this->indicatorOptions)) {
+                $this->indikator = array_key_first($this->indicatorOptions);
             }
         }
 
@@ -99,17 +100,20 @@ class GrafikMutu extends Page
             return;
         }
 
-        $unitId = $user->ruanganUtama->unit_id;
+        $ruanganId = $user->ruanganUtama->id_ruang ?? null;
         $selectedIndicator = HospitalSurveyIndicator::find($this->indikator);
         $this->target = $selectedIndicator ? (float) $selectedIndicator->indicator_target : 0;
 
-        $results = HospitalSurveyIndicatorResult::where('result_indicator_id', $this->indikator)
-            ->where('result_department_id', $unitId)
-            ->whereYear('result_period', $this->tahun)
-            ->get()
-            ->keyBy(function ($item) {
-                return Carbon::parse($item->result_period)->format('n');
-            });
+        $results = collect();
+        if ($ruanganId) {
+            $results = HospitalSurveyIndicatorResult::where('result_indicator_id', $this->indikator)
+                ->where('result_department_id', $ruanganId)
+                ->whereYear('result_period', $this->tahun)
+                ->get()
+                ->keyBy(function ($item) {
+                    return Carbon::parse($item->result_period)->format('n');
+                });
+        }
 
         $totalCapaian = 0;
         $validMonths = 0;
@@ -130,7 +134,7 @@ class GrafikMutu extends Page
                     'status' => $status,
                 ];
 
-                $this->chartData[] = $capaian;
+                $this->chartData[$i - 1] = $capaian;
                 $totalCapaian += $capaian;
                 $validMonths++;
                 $this->dataMasuk++;
@@ -149,9 +153,11 @@ class GrafikMutu extends Page
                     'capaian' => '-',
                     'status' => '-',
                 ];
-                $this->chartData[] = 0;
+                $this->chartData[$i - 1] = 0;
             }
         }
+        // Pastikan chartData selalu 12 elemen (Jan-Des)
+        $this->chartData = array_values(array_pad($this->chartData, 12, 0));
 
         if ($validMonths > 0) {
             $this->rataRataCapaian = round($totalCapaian / $validMonths, 2);

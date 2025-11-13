@@ -68,6 +68,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-clipboard-document-list')
                     ->sort(1),
             ])
+            // Chart.js is loaded via Vite or Blade @push('scripts') in views
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

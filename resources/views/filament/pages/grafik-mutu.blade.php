@@ -50,34 +50,38 @@
 
         {{-- GRAFIK --}}
         <x-filament::card class="mt-2">
-            <div x-data="{
-                chart: null,
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
-                values: @json($chartData),
-                target: {{ $target }},
-                initChart() {
-                    if (this.chart) {
-                        this.chart.destroy();
+            <div
+                x-data="{}"
+                x-init="() => {
+                    // Destroy any existing chart instance on the canvas.
+                    let existingChart = Chart.getChart($refs.canvas);
+                    if (existingChart) {
+                        existingChart.destroy();
                     }
-                    const ctx = this.$refs.canvas.getContext('2d');
-                    this.chart = new Chart(ctx, {
+
+                    // Create a new chart and store the instance on the DOM element ($el)
+                    // to avoid Alpine's reactivity causing a 'too much recursion' error.
+                    $el.chart = new Chart($refs.canvas, {
                         type: 'line',
                         data: {
-                            labels: this.labels,
-                            datasets: [{
-                                label: 'Capaian (%)',
-                                data: this.values,
-                                borderColor: 'rgba(59, 130, 246, 0.8)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                                fill: true,
-                                tension: 0.4,
-                            }, {
-                                label: 'Target (%)',
-                                data: Array(12).fill(this.target),
-                                borderColor: 'rgba(239, 68, 68, 0.8)',
-                                borderDash: [5, 5],
-                                fill: false,
-                            }]
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                            datasets: [
+                                {
+                                    label: 'Capaian (%)',
+                                    data: @json($chartData),
+                                    borderColor: 'rgba(59, 130, 246, 0.8)',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                    fill: true,
+                                    tension: 0.4,
+                                },
+                                {
+                                    label: 'Target (%)',
+                                    data: Array(12).fill(@json($target)),
+                                    borderColor: 'rgba(239, 68, 68, 0.8)',
+                                    borderDash: [5, 5],
+                                    fill: false,
+                                }
+                            ]
                         },
                         options: {
                             responsive: true,
@@ -90,15 +94,16 @@
                             }
                         }
                     });
-                },
-                updateChart(newValues, newTarget) {
-                    this.values = newValues;
-                    this.target = newTarget;
-                    this.chart.data.datasets[0].data = this.values;
-                    this.chart.data.datasets[1].data = Array(12).fill(this.target);
-                    this.chart.update();
-                }
-            }" x-init="initChart()" @window('update-chart-data', (event) => updateChart(event.detail.chartData, event.detail.target)) wire:ignore>
+                }"
+                @update-chart-data.window="
+                    if ($el.chart) {
+                        $el.chart.data.datasets[0].data = $event.detail.chartData;
+                        $el.chart.data.datasets[1].data = Array(12).fill($event.detail.target);
+                        $el.chart.update();
+                    }
+                "
+                wire:ignore
+            >
                 <div class="h-72">
                     <canvas x-ref="canvas"></canvas>
                 </div>
@@ -288,4 +293,5 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @endpush
+
 </x-filament-panels::page>

@@ -53,11 +53,6 @@ class IndicatorResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return static::getModel()::query()
-            ->select([
-                'hospital_survey_indicator.*',
-                'imut_category.imut_name_category',
-            ])
-            ->leftJoin('imut_category', 'hospital_survey_indicator.indicator_category_id', '=', 'imut_category.imut_category_id');
+        return static::getModel()::query();
     }
 }
