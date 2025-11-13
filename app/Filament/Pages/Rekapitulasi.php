@@ -40,13 +40,13 @@ class Rekapitulasi extends Page
     {
         $user = Auth::user();
 
-        // ✅ PERBAIKAN: Gunakan ruangans
+        // ✅ PERBAIKAN: Gunakan nama unit, bukan nama ruangan
         if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
             return 'Unit Anda: Tidak ada unit';
         }
 
         $ruangan = $user->ruangans->first();
-        $unitName = $ruangan->nama_ruang ?? 'Tidak ada unit';
+        $unitName = $ruangan->unit->nama_unit ?? $ruangan->nama_ruang ?? 'Tidak ada unit';
 
         return "Unit Anda: {$unitName}";
     }

@@ -38,6 +38,7 @@ class ValidasiDetail extends Page
     {
         $indicator = HospitalSurveyIndicator::with([
             'imutCategory',
+            'units',
             'results' => function ($q) {
                 $q->whereYear('result_period', $this->year)
                     ->whereMonth('result_period', $this->month)
@@ -51,15 +52,19 @@ class ValidasiDetail extends Page
             return;
         }
 
-        // Group results by result_department_id, fetch ruangan & unit info
-        $groupedResults = $indicator->results->groupBy('result_department_id')->map(function ($group, $ruangId) {
-            // Ambil data ruangan dari tabel ruangan
+        // Get unit names from the relationship
+        $unitNames = $indicator->units->pluck('nama_unit')->all();
+
+        // Use the loaded units, keyed by ID for easy lookup
+        $units = $indicator->units->keyBy('id');
+
+        $groupedResults = $indicator->results->groupBy('result_department_id')->map(function ($group, $ruangId) use ($units) {
+            // We still need to get the ruangan record to find its unit_id
             $ruangan = DB::table('ruangan')->where('id_ruang', $ruangId)->first();
-            // Ambil nama unit dari tabel unit (jika ada)
-            $unitName = null;
-            if ($ruangan && $ruangan->id_unit) {
-                $unit = DB::table('unit')->where('id', $ruangan->id_unit)->first();
-                $unitName = $unit->nama_unit ?? null;
+
+            $unitName = 'Unit Tidak Diketahui';
+            if ($ruangan && $ruangan->id_unit && isset($units[$ruangan->id_unit])) {
+                $unitName = $units[$ruangan->id_unit]->nama_unit;
             }
 
             $numerator = $group->sum(fn ($r) => (int) $r->result_numerator_value);
@@ -67,9 +72,9 @@ class ValidasiDetail extends Page
             $persentase = $denominator > 0 ? round(($numerator / $denominator) * 100, 2) : 0;
 
             return [
-                'unit_name' => $unitName ?? 'Unit Tidak Diketahui',
-                'ruangan_name' => $ruangan->nama_ruang ?? '-', // Optional: tampilkan juga nama ruangan
-                'area_monitor' => $ruangan->sink ?? '-',
+                'unit_name' => $unitName,
+                'ruangan_name' => $ruangan->nama_ruang ?? 'Ruangan Tidak Diketahui',
+                'area_monitor' => $ruangan ? ($ruangan->sink ?: $ruangan->nama_ruang) : 'Ruangan tidak ditemukan',
                 'numerator' => $numerator,
                 'denominator' => $denominator,
                 'persentase' => $persentase,
@@ -79,8 +84,8 @@ class ValidasiDetail extends Page
         $this->detailData = [
             'indicator_id' => $indicator->indicator_id,
             'indicator_name' => $indicator->indicator_definition,
-            'category_name' => $indicator->imutCategory->imut ?? '-',
-            'monitoring_area' => $indicator->indicator_monitoring_area,
+            'category_name' => $indicator->imutCategory->imut_name_category ?? '-',
+            'monitoring_area' => $unitNames,
             'target' => $indicator->indicator_target ?? '100',
             'numerator_desc' => $indicator->indicator_numerator_description,
             'denominator_desc' => $indicator->indicator_denumerator_description,

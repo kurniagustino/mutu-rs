@@ -2,32 +2,46 @@
     <div class="space-y-6">
         {{-- Filter Form - HORIZONTAL LAYOUT --}}
         <x-filament::card>
-            <form wire:submit="lihatLaporan" class="space-y-4">
-                {{-- ✅ CUSTOM GRID LAYOUT - 3 KOLOM + TOMBOL --}}
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    {{-- IMUT Category --}}
+            <div class="space-y-4">
+                {{-- Title & Info --}}
+                <div class="flex items-center justify-between">
                     <div>
-                        {{ $this->form->getComponent('imut_category_id') }}
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filter Laporan</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <span class="inline-block w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full mr-1"></span>
+                            Opsi abu-abu = Tidak ada data
+                        </p>
                     </div>
+                </div>
 
-                    {{-- Bulan --}}
-                    <div>
-                        {{ $this->form->getComponent('bulan') }}
-                    </div>
+                <form wire:submit="lihatLaporan">
+                    {{-- ✅ GRID LAYOUT - 4 KOLOM RESPONSIVE --}}
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        {{-- IMUT Category --}}
+                        <div class="md:col-span-2">
+                            {{ $this->form->getComponent('imut_category_id') }}
+                        </div>
 
-                    {{-- Tahun --}}
-                    <div>
-                        {{ $this->form->getComponent('tahun') }}
+                        {{-- Tahun --}}
+                        <div>
+                            {{ $this->form->getComponent('tahun') }}
+                        </div>
+
+                        {{-- Bulan --}}
+                        <div>
+                            {{ $this->form->getComponent('bulan') }}
+                        </div>
                     </div>
 
                     {{-- Tombol Lihat Laporan --}}
-                    <div>
-                        <x-filament::button type="submit" color="primary" class="w-full">
+                    <div class="mt-4 flex justify-end">
+                        <x-filament::button type="submit" color="primary" icon="heroicon-o-magnifying-glass"
+                            size="lg">
                             Lihat Laporan
                         </x-filament::button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </x-filament::card>
 
         {{-- Results Table --}}
@@ -51,13 +65,20 @@
 
             <x-filament::card>
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-semibold text-gray-950 dark:text-white">
-                            Daftar Pendataan IMUT Bulan {{ $bulanNama[$bulan] ?? '' }} {{ $tahun }}
-                            ({{ count($indicators) }})
-                        </h2>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-950 dark:text-white">
+                                📊 Daftar Pendataan IMUT
+                            </h2>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Periode: <span class="font-semibold">{{ $bulanNama[$bulan] ?? '' }}
+                                    {{ $tahun }}</span>
+                                · Total: <span class="font-semibold text-primary-600">{{ count($indicators) }}
+                                    Indikator</span>
+                            </p>
+                        </div>
 
-                        <x-filament::button color="info" icon="heroicon-o-document-arrow-down" wire:click="cetakPdf">
+                        <x-filament::button color="success" icon="heroicon-o-document-arrow-down" wire:click="cetakPdf">
                             Cetak PDF
                         </x-filament::button>
                     </div>
@@ -68,75 +89,78 @@
                                 <thead class="bg-gray-50 dark:bg-white/5">
                                     <tr>
                                         <th
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-950 dark:text-white">
-                                            ID #
+                                            class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
+                                            No
                                         </th>
                                         <th
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-950 dark:text-white">
+                                            class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
                                             Indikator Mutu
                                         </th>
                                         <th
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-950 dark:text-white">
+                                            class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
                                             Total Pendataan
                                         </th>
                                         <th
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-950 dark:text-white">
+                                            class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
                                             Aksi
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-white/10">
+                                <tbody class="divide-y divide-gray-100 dark:divide-white/10">
                                     @forelse($indicators as $index => $indicator)
                                         <tr
-                                            class="transition duration-75 hover:bg-gray-50 dark:hover:bg-white/5 bg-white dark:bg-gray-900">
-                                            <td class="px-3 py-4 text-sm text-gray-950 dark:text-white">
+                                            class="transition duration-75 hover:bg-primary-50/30 dark:hover:bg-primary-900/10 {{ $index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/30' }}">
+                                            <td class="px-4 py-4 text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 {{ $index + 1 }}
                                             </td>
-                                            <td class="px-3 py-4">
-                                                <div class="space-y-1">
+                                            <td class="px-4 py-4">
+                                                <div class="space-y-2">
                                                     <div class="flex items-center gap-2">
-                                                        <x-filament::badge color="info">
+                                                        <x-filament::badge color="info" size="sm">
                                                             {{ $indicator['area'] }}
+                                                        </x-filament::badge>
+                                                        <x-filament::badge color="gray" size="xs">
+                                                            {{ $indicator['type'] }}
                                                         </x-filament::badge>
                                                     </div>
                                                     <div class="text-sm font-medium text-gray-950 dark:text-white">
-                                                        🏥 {{ $indicator['title'] }}
-                                                    </div>
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                        Tipe: {{ $indicator['type'] }}
+                                                        {{ $indicator['title'] }}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="px-3 py-4">
-                                                <x-filament::badge :color="$indicator['total_pendataan'] > 0 ? 'success' : 'danger'" size="lg">
-                                                    {{ $indicator['total_pendataan'] }}
-                                                </x-filament::badge>
+                                            <td class="px-4 py-4 text-center">
+                                                <div class="flex items-center justify-center">
+                                                    <x-filament::badge :color="$indicator['total_pendataan'] > 0 ? 'success' : 'danger'" size="lg">
+                                                        <span
+                                                            class="text-lg font-bold">{{ $indicator['total_pendataan'] }}</span>
+                                                    </x-filament::badge>
+                                                </div>
                                             </td>
-                                            <td class="px-3 py-4">
-                                                <x-filament::button color="info" size="sm" icon="heroicon-m-eye"
-                                                    wire:click="showDetail({{ $indicator['id'] }})">
-                                                    Detil
+                                            <td class="px-4 py-4 text-center">
+                                                <x-filament::button color="primary" size="sm" icon="heroicon-m-eye"
+                                                    wire:click="showDetail({{ $indicator['id'] }})" outlined>
+                                                    Detail
                                                 </x-filament::button>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
                                             <td colspan="4" class="px-6 py-12 text-center">
-                                                <div class="flex flex-col items-center justify-center">
-                                                    <div class="mb-4 rounded-full bg-gray-100 dark:bg-gray-500/20 p-3">
-                                                        <svg class="h-6 w-6 text-gray-500 dark:text-gray-400"
+                                                <div class="flex flex-col items-center justify-center py-4">
+                                                    <div class="mb-4 rounded-full bg-gray-100 dark:bg-gray-500/20 p-4">
+                                                        <svg class="h-10 w-10 text-gray-400 dark:text-gray-500"
                                                             xmlns="http://www.w3.org/2000/svg" fill="none"
                                                             viewBox="0 0 24 24" stroke-width="1.5"
                                                             stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M6 18L18 6M6 6l12 12" />
+                                                                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                                                         </svg>
                                                     </div>
                                                     <h4 class="text-base font-semibold text-gray-950 dark:text-white">
                                                         Tidak ada data
                                                     </h4>
                                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                                        Tidak ada data pendataan untuk bulan yang dipilih
+                                                        Tidak ada data pendataan untuk periode yang dipilih
                                                     </p>
                                                 </div>
                                             </td>

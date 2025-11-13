@@ -7,13 +7,12 @@ use App\Models\HospitalSurveyIndicatorResult;
 use App\Models\ImutCategory;
 use App\Models\User;
 use BackedEnum;
-use FPDF;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Http\Request;
+use FPDF;
 use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
@@ -59,49 +58,33 @@ class LaporanPendataanPerbulan extends Page implements HasForms
     {
         return [
             Select::make('imut_category_id')
-                ->label('IMUT Category')
-                ->placeholder('Pilih IMUT')
+                ->label('Kategori IMUT')
+                ->placeholder('Pilih Kategori IMUT')
                 ->options(ImutCategory::pluck('imut_name_category', 'imut_category_id'))
                 ->required()
                 ->native(false)
+                ->searchable()
                 ->live(),
 
-            // ✅ GANTI JADI SELECT BULAN
-            Select::make('bulan')
-                ->label('Bulan')
-                ->placeholder('Pilih Bulan')
-                ->options([
-                    1 => 'Januari',
-                    2 => 'Februari',
-                    3 => 'Maret',
-                    4 => 'April',
-                    5 => 'Mei',
-                    6 => 'Juni',
-                    7 => 'Juli',
-                    8 => 'Agustus',
-                    9 => 'September',
-                    10 => 'Oktober',
-                    11 => 'November',
-                    12 => 'Desember',
-                ])
+            Select::make('tahun')
+                ->label('Tahun')
+                ->placeholder('Pilih Tahun')
+                ->options($this->getAvailableYears())
+                ->disableOptionWhen(function ($value) {
+                    return ! $this->isYearHasData($value);
+                })
+                ->default(now()->year)
                 ->required()
                 ->native(false)
                 ->live(),
 
-            // ✅ SELECT TAHUN
-            Select::make('tahun')
-                ->label('Tahun')
-                ->placeholder('Pilih Tahun')
-                ->options(function () {
-                    $currentYear = now()->year;
-                    $years = [];
-                    for ($year = $currentYear - 5; $year <= $currentYear + 5; $year++) {
-                        $years[$year] = $year;
-                    }
-
-                    return $years;
+            Select::make('bulan')
+                ->label('Bulan')
+                ->placeholder('Pilih Bulan')
+                ->options($this->getAvailableMonths())
+                ->disableOptionWhen(function ($value) {
+                    return ! $this->isMonthHasData($value);
                 })
-                ->default(now()->year)
                 ->required()
                 ->native(false)
                 ->live(),
@@ -111,6 +94,104 @@ class LaporanPendataanPerbulan extends Page implements HasForms
     protected function getFormColumns(): int
     {
         return 3; // ✅ 3 KOLOM (IMUT Category, Bulan, Tahun)
+    }
+
+    /**
+     * ✅ GET AVAILABLE MONTHS - Menampilkan semua bulan
+     */
+    protected function getAvailableMonths(): array
+    {
+        return [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+    }
+
+    /**
+     * ✅ GET AVAILABLE YEARS - Menampilkan range tahun
+     */
+    protected function getAvailableYears(): array
+    {
+        $currentYear = now()->year;
+        $years = [];
+        for ($year = $currentYear - 5; $year <= $currentYear + 5; $year++) {
+            $years[$year] = $year;
+        }
+
+        return $years;
+    }
+
+    /**
+     * ✅ CHECK IF MONTH HAS DATA
+     * Cek apakah bulan tertentu ada datanya
+     */
+    protected function isMonthHasData(int $bulan): bool
+    {
+        // Jika category atau tahun belum dipilih, return true (enable semua)
+        if (! $this->imut_category_id || ! $this->tahun) {
+            return true;
+        }
+
+        $user = Auth::user();
+        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+            return false;
+        }
+
+        $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
+
+        // Cek apakah ada data untuk bulan ini
+        $hasData = HospitalSurveyIndicatorResult::query()
+            ->whereHas('indicator', function ($query) {
+                $query->where('indicator_category_id', $this->imut_category_id);
+            })
+            ->whereIn('result_department_id', $ruanganIds)
+            ->where('result_record_status', 'A')
+            ->whereYear('result_post_date', $this->tahun)
+            ->whereMonth('result_post_date', $bulan)
+            ->exists();
+
+        return $hasData;
+    }
+
+    /**
+     * ✅ CHECK IF YEAR HAS DATA
+     * Cek apakah tahun tertentu ada datanya
+     */
+    protected function isYearHasData(int $tahun): bool
+    {
+        // Jika category belum dipilih, return true (enable semua)
+        if (! $this->imut_category_id) {
+            return true;
+        }
+
+        $user = Auth::user();
+        if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
+            return false;
+        }
+
+        $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
+
+        // Cek apakah ada data untuk tahun ini
+        $hasData = HospitalSurveyIndicatorResult::query()
+            ->whereHas('indicator', function ($query) {
+                $query->where('indicator_category_id', $this->imut_category_id);
+            })
+            ->whereIn('result_department_id', $ruanganIds)
+            ->where('result_record_status', 'A')
+            ->whereYear('result_post_date', $tahun)
+            ->exists();
+
+        return $hasData;
     }
 
     public function lihatLaporan(): void
@@ -134,6 +215,9 @@ class LaporanPendataanPerbulan extends Page implements HasForms
         $userUnitIds = $user->ruangans->pluck('id_unit')->unique()->toArray();
         $ruanganIds = $user->ruangans->pluck('id_ruang')->map(fn ($id) => (string) $id)->toArray();
 
+        // ✅ Ambil nama unit user untuk ditampilkan
+        $userUnitName = $user->ruangans->first()->unit->nama_unit ?? 'N/A';
+
         // ✅ PERBAIKAN: Filter data menggunakan relasi units
         $this->indicators = HospitalSurveyIndicator::query()
             ->where('indicator_category_id', $this->imut_category_id)
@@ -150,10 +234,10 @@ class LaporanPendataanPerbulan extends Page implements HasForms
                 },
             ])
             ->get()
-            ->map(function ($indicator) {
+            ->map(function ($indicator) use ($userUnitName) {
                 return [
                     'id' => $indicator->indicator_id,
-                    'area' => $indicator->units->first()->nama_unit ?? 'N/A',
+                    'area' => $userUnitName, // ✅ Gunakan unit user yang login
                     'title' => $indicator->indicator_name,
                     'type' => $indicator->indicator_type,
                     'total_pendataan' => $indicator->total_pendataan,
@@ -167,13 +251,13 @@ class LaporanPendataanPerbulan extends Page implements HasForms
     {
         $user = Auth::user();
 
-        // ✅ PERBAIKAN: Gunakan ruangans
+        // ✅ PERBAIKAN: Gunakan nama unit, bukan nama ruangan
         if (! $user || ! $user->ruangans || $user->ruangans->isEmpty()) {
             return 'Unit Anda: Tidak ada unit';
         }
 
         $ruangan = $user->ruangans->first();
-        $unitName = $ruangan->nama_ruang ?? 'Tidak ada unit';
+        $unitName = $ruangan->unit->nama_unit ?? $ruangan->nama_ruang ?? 'Tidak ada unit';
 
         return "Unit Anda: {$unitName}";
     }
@@ -312,7 +396,7 @@ class LaporanPendataanPerbulan extends Page implements HasForms
         }
 
         return response()->streamDownload(function () {
-            $pdf = new FPDF();
+            $pdf = new FPDF;
             $pdf->AddPage();
             $pdf->SetFont('Arial', 'B', 16);
 
@@ -329,10 +413,10 @@ class LaporanPendataanPerbulan extends Page implements HasForms
             // Header
             $pdf->Cell(0, 10, 'Laporan Pendataan IMUT Perbulan', 0, 1, 'C');
             $pdf->SetFont('Arial', '', 12);
-            $pdf->Cell(0, 7, 'Unit: ' . $unit, 0, 1, 'C');
-            $pdf->Cell(0, 7, 'Kategori: ' . $category, 0, 1, 'C');
-            $pdf->Cell(0, 7, 'Periode: ' . ($bulanNama[$this->bulan] ?? '') . ' ' . $this->tahun, 0, 1, 'C');
-            $pdf->Cell(0, 7, 'Tanggal Cetak: ' . now()->translatedFormat('d F Y, H:i:s'), 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Unit: '.$unit, 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Kategori: '.$category, 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Periode: '.($bulanNama[$this->bulan] ?? '').' '.$this->tahun, 0, 1, 'C');
+            $pdf->Cell(0, 7, 'Tanggal Cetak: '.now()->translatedFormat('d F Y, H:i:s'), 0, 1, 'C');
             $pdf->Ln(10);
 
             // Table Header
@@ -348,7 +432,7 @@ class LaporanPendataanPerbulan extends Page implements HasForms
             $pdf->SetFont('Arial', '', 10);
             foreach ($this->indicators as $index => $indicator) {
                 $pdf->Cell(10, 10, $index + 1, 1, 0, 'C');
-                
+
                 // MultiCell for indicator title
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
@@ -366,6 +450,6 @@ class LaporanPendataanPerbulan extends Page implements HasForms
             $pdf->Cell(30, 10, count($this->indicators), 1, 1, 'C', true);
 
             echo $pdf->Output('S');
-        }, 'laporan-pendataan-' . $this->tahun . '-' . $this->bulan . '.pdf');
+        }, 'laporan-pendataan-'.$this->tahun.'-'.$this->bulan.'.pdf');
     }
 }

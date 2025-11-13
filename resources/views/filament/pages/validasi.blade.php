@@ -290,7 +290,7 @@
                     </h3>
                     <p class="text-sm text-blue-700 dark:text-blue-300">
                         Periode: {{ $selectedYear }}-{{ str_pad($selectedMonth, 2, '0', STR_PAD_LEFT) }} |
-                        Unit: <span class="font-semibold">{{ auth()->user()->departemen->nama_ruang ?? 'N/A' }}</span>
+                        Unit: <span class="font-semibold">{{ $selectedIndicatorData['unit_name'] ?? 'N/A' }}</span>
                     </p>
                 </div>
 

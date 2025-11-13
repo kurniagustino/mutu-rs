@@ -22,13 +22,33 @@
                                 {{ $detailData['category_name'] }}
                             </x-filament::badge>
                         </div>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                            🔍 {!! $detailData['indicator_name'] !!}
-                        </h2>
-                        @if ($detailData['monitoring_area'])
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                <span class="font-medium">Area Monitor:</span> {{ $detailData['monitoring_area'] }}
-                            </p>
+                        <div class="prose prose-sm dark:prose-invert max-w-none">
+                            @php
+                                $indicatorName = $detailData['indicator_name'];
+                                // Add a heading for the second part
+                                $indicatorName = preg_replace('/(\d+\.\s*Kepatuhan Identifikasi Pasien)/', '<h3>$1</h3>', $indicatorName);
+                                // Add a sub-heading
+                                $indicatorName = str_replace('Definisi Operasional:', '<strong>Definisi Operasional:</strong>', $indicatorName);
+                                // Format the 'a, b, c' list
+                                $indicatorName = preg_replace('/\s+([a-c]\.)\s+/', '<br>&nbsp;&nbsp;&nbsp;&nbsp;$1 ', $indicatorName);
+                            @endphp
+                            {!! $indicatorName !!}
+                        </div>
+
+                        {{-- Numerator & Denominator dihapus sesuai permintaan --}}
+                        @if (!empty($detailData['monitoring_area']))
+                            <div class="mt-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                    <span class="font-medium">Area Monitor Indikator:</span>
+                                </p>
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach ((array) $detailData['monitoring_area'] as $area)
+                                        <x-filament::badge color="gray">
+                                            {{ $area }}
+                                        </x-filament::badge>
+                                    @endforeach
+                                </div>
+                            </div>
                         @endif
                     </div>
                     <div class="text-right">
@@ -45,10 +65,11 @@
         <x-filament::card>
             <div class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Data Per Unit/Ruangan
+                    Detail Data Per Unit / Ruangan
                 </h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Periode {{ $year }}-{{ str_pad($month, 2, '0', STR_PAD_LEFT) }}
+                    Periode: <span
+                        class="font-medium">{{ $year }}-{{ str_pad($month, 2, '0', STR_PAD_LEFT) }}</span>
                 </p>
             </div>
 
@@ -81,11 +102,19 @@
                             @foreach ($detailData['results_by_unit'] as $index => $unit)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {{ $index + 1 }}</td>
+                                        {{ $index + 1 }}
+                                    </td>
                                     <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ $unit['unit_name'] }}</td>
+                                        {{ $unit['unit_name'] }}
+                                        @if (!empty($unit['ruangan_name']) && $unit['ruangan_name'] !== 'Ruangan Tidak Diketahui')
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                ({{ $unit['ruangan_name'] }})
+                                            </div>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                        {{ $unit['area_monitor'] }}</td>
+                                        {{ $unit['area_monitor'] }}
+                                    </td>
                                     <td class="px-4 py-3 text-center">
                                         <span
                                             class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200">

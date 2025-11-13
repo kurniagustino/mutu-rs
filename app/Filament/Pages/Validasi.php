@@ -128,7 +128,7 @@ class Validasi extends Page implements HasForms
         $this->selectedMonth = $month;
 
         $query = HospitalSurveyIndicator::query()
-            ->with(['imutCategory', 'results' => function ($q) use ($year, $month) {
+            ->with(['imutCategory', 'units', 'results' => function ($q) use ($year, $month) {
                 $q->whereYear('result_period', $year)
                     ->whereMonth('result_period', $month);
             }])
@@ -150,11 +150,14 @@ class Validasi extends Page implements HasForms
                 ->where('periodevalidasi', $periode)
                 ->first();
 
+            $unitName = $indicator->units->pluck('nama_unit')->implode(', ');
+
             // CATATAN: GUNAKAN KOLOM NAMA YANG BENAR DI imutCategory, misal: 'imut_name_category'
             return [
                 'indicator_id' => $indicator->indicator_id,
                 'indicator_name' => $indicator->indicator_definition,
                 'category_name' => $indicator->imutCategory->imut_name_category ?? '-', // <-- KOLOM SESUAI TABEL
+                'unit_name' => $unitName ?: 'N/A',
                 'numerator' => $numerator,
                 'numerator_description' => $indicator->indicator_numerator_description,
                 'denominator' => $denominator,

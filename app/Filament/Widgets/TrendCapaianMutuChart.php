@@ -15,7 +15,7 @@ class TrendCapaianMutuChart extends ChartWidget
     protected function getData(): array
     {
         $user = Auth::user();
-        $idUnit = $user->ruangan_utama->id_unit ?? null;
+    $idUnit = $user->ruanganUtama->id_unit ?? null;
         
         // Handle filter
         $year = match($this->filter) {
